@@ -147,13 +147,21 @@
         $logs = $device->activityLogs()->latest()->paginate(5, ['*'], 'logs')->withQueryString();
         $serviceOpen = request()->has('services');
         $logsOpen = request()->has('logs');
+        
+        // Pre-calculate software allocations for the counter
+        $deviceAllocations = \App\Models\SubscriptionAllocation::with('subscription.account')
+            ->where('assignable_type', 'App\Models\Device')
+            ->where('assignable_id', $device->id)
+            ->get();
+        $softwareCount = $deviceAllocations->count();
     @endphp
 
-    <div class="row">
-        <div class="col-12 col-xl-4 mb-4">
+    <div class="row g-3 g-xl-4 mb-5">
+        
+        <div class="col-12 col-xl-4 d-flex flex-column gap-3">
             
-            <div class="card border-0 mb-4 overflow-hidden">
-                <div class="card-body text-center p-5 border-bottom position-relative">
+            <div class="card border-0 overflow-hidden">
+                <div class="card-body text-center p-5 position-relative">
                     
                     @if($device->image1)
                         <div class="mb-4">
@@ -174,16 +182,58 @@
                     <h4 class="fw-bold text-uppercase tracking-tight mb-1">{{ $device->manufacturer ?? 'Unknown OEM' }}</h4>
                     <p class="text-muted fw-bold mb-0">{{ $device->model ?? 'Standard Edition' }}</p>
                 </div>
+            </div>
 
+            <div class="card border-0">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <h6 class="text-muted fw-bold text-uppercase small mb-0">Assignment & Specifications</h6>
+                </div>
                 <div class="card-body p-4">
+                    
+                    <div class="mb-4">
+                        @if($device->device_group != 'Device' && $device->parentDevice)
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-lg bg-light-info text-info">
+                                    <span class="avatar-content d-flex align-items-center justify-content-center"><i class="bi bi-pc-display fs-5 icon-fix"></i></span>
+                                </div>
+                                <div>
+                                    <a href="{{ route('inventory.show', $device->parentDevice->id) }}" class="fw-bold text-heading fs-6 d-block">{{ $device->parentDevice->name }}</a>
+                                    <p class="mb-0 text-muted fw-semibold small mt-1 d-flex align-items-center gap-2">
+                                        <i class="bi bi-motherboard icon-fix"></i> Installed Component
+                                    </p>
+                                </div>
+                            </div>
+                        @elseif($device->employee)
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-lg bg-light-primary text-primary">
+                                    <span class="avatar-content fs-5 fw-bold d-flex align-items-center justify-content-center">{{ substr($device->employee->name, 0, 1) }}</span>
+                                </div>
+                                <div>
+                                    <a href="{{ route('employees.show', $device->employee->id) }}" class="fw-bold text-heading fs-6 d-block">{{ $device->employee->name }}</a>
+                                    <p class="mb-0 text-muted fw-semibold small mt-1 d-flex align-items-center gap-2">
+                                        <i class="bi bi-building icon-fix"></i> {{ $device->employee->department->name ?? 'No Department' }}
+                                    </p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center py-4 rounded-3 bg-transparent border border-2" style="border-style: dashed !important; border-color: rgba(67, 94, 190, 0.2) !important;">
+                                <i class="bi bi-box-seam text-primary fs-3 mb-2 d-block opacity-50 icon-fix"></i>
+                                <p class="mb-0 fw-bold text-heading">Available in Stock</p>
+                                <small class="text-muted">Asset is ready for deployment</small>
+                            </div>
+                        @endif
+                    </div>
+
+                    <hr class="my-4" style="border-color: rgba(67, 94, 190, 0.1);">
+
                     @if(!in_array($device->category, ['PC', 'Laptop']))
-                        <div class="p-4 bg-transparent rounded-3 mb-4 border shadow-sm">
+                        <div class="p-3 bg-transparent rounded-3 mb-4 border shadow-sm">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted fw-bold text-uppercase small">{{ $device->category == 'Phone' ? 'Battery Health' : 'Hardware Health' }}</span>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="fw-black fs-4 {{ $device->current_health < 50 ? 'text-danger' : 'text-success' }}">{{ $device->current_health }}%</span>
-                                    <button data-bs-toggle="modal" data-bs-target="#health-modal" class="btn btn-sm btn-light-secondary rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" title="Log Health Status">
-                                        <i class="bi bi-plus icon-fix" style="font-size: 1.2rem;"></i>
+                                    <span class="fw-black fs-5 {{ $device->current_health < 50 ? 'text-danger' : 'text-success' }}">{{ $device->current_health }}%</span>
+                                    <button data-bs-toggle="modal" data-bs-target="#health-modal" class="btn btn-sm btn-light-secondary rounded-circle p-1 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" title="Log Health Status">
+                                        <i class="bi bi-plus icon-fix"></i>
                                     </button>
                                 </div>
                             </div>
@@ -194,16 +244,17 @@
                     @endif
 
                     <ul class="list-group list-group-flush list-group-custom">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-bottom py-3 bg-transparent">
+                            <span class="text-muted fw-semibold small d-flex align-items-center gap-2"><i class="bi bi-key text-primary fs-5 icon-fix"></i> Password</span>
+                            <span class="fw-bold text-heading">{{ $device->device_password ?? 'Not Set' }}</span>
+                        </li>
+
                         @if($device->category == 'Phone')
                             <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-bottom py-3 bg-transparent">
                                 <span class="text-muted fw-semibold small d-flex align-items-center gap-2"><i class="bi bi-memory text-primary fs-5 icon-fix"></i> Memory</span>
                                 <span class="fw-bold text-heading">{{ $device->ram ?? '-' }} / {{ $device->rom ?? '-' }}</span>
                             </li>
                         @elseif(!in_array($device->category, ['PC', 'Laptop']))
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-bottom py-3 bg-transparent">
-                                <span class="text-muted fw-semibold small d-flex align-items-center gap-2"><i class="bi bi-lock text-primary fs-5 icon-fix"></i> Password</span>
-                                <span class="fw-bold text-heading">{{ $device->device_password ?? '-' }}</span>
-                            </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center px-0 border-bottom py-3 bg-transparent">
                                 <span class="text-muted fw-semibold small d-flex align-items-center gap-2"><i class="bi bi-hdd text-primary fs-5 icon-fix"></i> Capacity</span>
                                 <span class="fw-bold text-heading">{{ $device->size ?? '-' }}</span>
@@ -222,135 +273,18 @@
                     </ul>
                 </div>
             </div>
-
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                    <h6 class="text-muted fw-bold text-uppercase small mb-0">Custody & Assignment</h6>
-                </div>
-                <div class="card-body py-4">
-                    @if($device->employee)
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="avatar avatar-lg bg-light-primary text-primary">
-                                <span class="avatar-content fs-5 fw-bold d-flex align-items-center justify-content-center">{{ substr($device->employee->name, 0, 1) }}</span>
-                            </div>
-                            <div>
-                                <a href="{{ route('employees.show', $device->employee->id) }}" class="fw-bold text-heading fs-6 d-block">{{ $device->employee->name }}</a>
-                                <p class="mb-0 text-muted fw-semibold small mt-1 d-flex align-items-center gap-2">
-                                    <i class="bi bi-building icon-fix"></i> {{ $device->employee->department->name ?? 'No Department' }}
-                                </p>
-                            </div>
-                        </div>
-                    @else
-                        <div class="text-center py-4 rounded-3 bg-transparent border border-2" style="border-style: dashed !important; border-color: rgba(67, 94, 190, 0.2) !important;">
-                            <i class="bi bi-box-seam text-primary fs-3 mb-2 d-block opacity-50 icon-fix"></i>
-                            <p class="mb-0 fw-bold text-heading">Available in Stock</p>
-                            <small class="text-muted">Asset is ready for deployment</small>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            @if($device->device_group != 'Device')
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                    <h6 class="text-muted fw-bold text-uppercase small mb-0">Physical Installation</h6>
-                </div>
-                <div class="card-body py-4">
-                    @if($device->parentDevice)
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="avatar avatar-lg bg-light-info text-info">
-                                <span class="avatar-content d-flex align-items-center justify-content-center"><i class="bi bi-motherboard fs-5 icon-fix"></i></span>
-                            </div>
-                            <div>
-                                <p class="mb-0 text-muted fw-semibold small">Mounted Inside</p>
-                                <a href="{{ route('inventory.show', $device->parentDevice->id) }}" class="fw-bold text-heading fs-6">{{ $device->parentDevice->name }}</a>
-                            </div>
-                        </div>
-                    @else
-                        <div class="text-center py-4 rounded-3 bg-transparent border border-2" style="border-style: dashed !important; border-color: rgba(67, 94, 190, 0.2) !important;">
-                            <i class="bi bi-tools text-primary fs-3 mb-2 d-block opacity-50 icon-fix"></i>
-                            <p class="mb-0 fw-bold text-heading">Unattached Component</p>
-                            <small class="text-muted">Not installed in any parent device</small>
-                        </div>
-                    @endif
-                </div>
-            </div>
-            @endif
-
-            <div class="card border-0 mb-4">
-                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseLifecycle" aria-expanded="{{ $logsOpen ? 'true' : 'false' }}">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-clock-history text-primary fs-5 icon-fix"></i>
-                        <h6 class="mb-0 fw-bold text-uppercase small">Lifecycle Log</h6>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="badge bg-light-secondary text-secondary px-3 py-2 rounded-pill">{{ $logs->total() }} EVENTS</span>
-                        <i class="bi bi-chevron-down text-muted fs-5 accordion-chevron icon-fix"></i>
-                    </div>
-                </div>
-                <div id="collapseLifecycle" class="collapse {{ $logsOpen ? 'show' : '' }}">
-                    <div class="card-body p-0 border-top">
-                        <div id="ajax-lifecycle-container">
-                            <div class="p-4" style="max-height: 400px; overflow-y: auto;">
-                                <ul class="list-group list-group-flush">
-                                    @forelse($logs as $log)
-                                        <li class="list-group-item px-0 border-0 d-flex align-items-start mb-3 bg-transparent">
-                                            <div class="text-end me-3 mt-1" style="width: 50px;">
-                                                <span class="text-primary fw-bold small d-block">{{ $log->created_at->format('M d') }}</span>
-                                            </div>
-                                            <div class="p-3 rounded-3 flex-grow-1 timeline-box">
-                                                <h6 class="fw-bold text-heading small text-uppercase mb-1">{{ $log->action }}</h6>
-                                                <p class="mb-0 text-muted small">{{ $log->description }}</p>
-                                            </div>
-                                        </li>
-                                    @empty
-                                        <li class="list-group-item text-center py-4 border-0 bg-transparent">
-                                            <i class="bi bi-inbox empty-state-icon d-block"></i>
-                                            <span class="text-muted fw-semibold small">No history records yet.</span>
-                                        </li>
-                                    @endforelse
-                                </ul>
-                            </div>
-                            @if($logs->hasPages())
-                                <div class="p-3 border-top bg-transparent">
-                                    {{ $logs->links() }}
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="col-12 col-xl-8 mb-4">
+        <div class="col-12 col-xl-8 d-flex flex-column gap-3">
             
-            @if($device->image1 || $device->image2 || $device->image3)
-            <div class="card border-0 mb-5">
-                <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                    <h5 class="card-title fw-bold mb-1">Asset Gallery</h5>
-                    <p class="text-muted small mb-0">Visual documentation of this hardware.</p>
-                </div>
-                <div class="card-body py-4">
-                    <div class="row g-3">
-                        @foreach(['image1', 'image2', 'image3'] as $img)
-                            @if($device->$img)
-                            <div class="col-12 col-md-4">
-                                <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#image-lightbox-modal" onclick="document.getElementById('lightbox-image').src='{{ asset('storage/' . $device->$img) }}'" class="d-block">
-                                    <img src="{{ asset('storage/' . $device->$img) }}" class="img-fluid rounded border shadow-sm hover-zoom" style="height: 200px; width: 100%; object-fit: cover;" alt="Asset Image">
-                                </a>
-                            </div>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-            @endif
-
             @if($device->device_group == 'Device')
-            <div class="card border-0 mb-5">
+            <div class="card border-0">
                 <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseComponents" aria-expanded="false">
                     <div>
-                        <h5 class="card-title fw-bold mb-1">System Components</h5>
+                        <h5 class="card-title fw-bold mb-1 d-flex align-items-center gap-2">
+                            System Components
+                            <span class="badge bg-light-secondary text-secondary px-2 py-1 rounded-pill small" style="font-size: 0.75rem;">{{ $device->components->count() }}</span>
+                        </h5>
                         <p class="text-muted small mb-0">Hardware installed inside this asset.</p>
                     </div>
                     <div class="d-flex align-items-center gap-3">
@@ -417,10 +351,12 @@
             @endif
 
             @if(!in_array($device->category, ['PC', 'Laptop']))
-            <div class="card border-0 mb-5">
+            <div class="card border-0">
                 <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseHealth" aria-expanded="false">
                     <div>
-                        <h5 class="card-title fw-bold mb-1">Health Diagnostic Log</h5>
+                        <h5 class="card-title fw-bold mb-1 d-flex align-items-center gap-2">
+                            Health Diagnostic Log
+                        </h5>
                         <p class="text-muted small mb-0">Historical degradation tracking.</p>
                     </div>
                     <div class="d-flex align-items-center gap-3">
@@ -483,57 +419,13 @@
             </div>
             @endif
 
-            <div class="card border-0 mb-5">
-                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseService" aria-expanded="{{ $serviceOpen ? 'true' : 'false' }}">
-                    <div>
-                        <h5 class="card-title fw-bold mb-1">Service & Maint. Logs</h5>
-                        <p class="text-muted small mb-0">Record of repairs and costs.</p>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <button data-bs-toggle="modal" data-bs-target="#service-modal" class="btn btn-sm btn-light-warning text-warning fw-bold px-4 py-2 rounded-pill shadow-none d-flex align-items-center gap-2" onclick="event.stopPropagation();">
-                            <i class="bi bi-tools icon-fix"></i> LOG SERVICE
-                        </button>
-                        <i class="bi bi-chevron-down text-muted fs-5 accordion-chevron icon-fix"></i>
-                    </div>
-                </div>
-                <div id="collapseService" class="collapse {{ $serviceOpen ? 'show' : '' }}">
-                    <div class="card-body p-0 border-top mt-3">
-                        <div class="d-flex justify-content-between align-items-center p-4 bg-transparent border-bottom">
-                            <span class="fw-bold text-muted small text-uppercase">Total Cost: <span class="text-danger fs-5 ms-1">${{ number_format($device->serviceHistories->sum('cost'), 2) }}</span></span>
-                        </div>
-                        <div id="ajax-service-container">
-                            <ul class="list-group list-group-flush list-group-custom">
-                                @forelse($services as $history)
-                                    <li class="list-group-item p-4 bg-transparent">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <span class="fw-bold text-heading">{{ \Carbon\Carbon::parse($history->service_date)->format('M d, Y') }}</span>
-                                            <span class="badge {{ $history->cost ? 'bg-light-danger text-danger' : 'bg-light-secondary text-secondary' }} px-3 py-2 rounded-pill">
-                                                {{ $history->cost ? '$'.number_format($history->cost, 2) : 'No Cost' }}
-                                            </span>
-                                        </div>
-                                        <p class="mb-0 text-muted small">{{ $history->description }}</p>
-                                    </li>
-                                @empty
-                                    <li class="list-group-item p-5 text-center border-0 bg-transparent">
-                                        <i class="bi bi-wrench empty-state-icon d-block"></i>
-                                        <span class="text-muted fw-semibold small">No service records found.</span>
-                                    </li>
-                                @endforelse
-                            </ul>
-                            @if($services->hasPages())
-                                <div class="p-3 border-top bg-transparent">
-                                    {{ $services->links() }}
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card border-0 mb-5">
+            <div class="card border-0">
                 <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseSoftware" aria-expanded="false">
                     <div>
-                        <h5 class="card-title fw-bold mb-1">Assigned Software & Licenses</h5>
+                        <h5 class="card-title fw-bold mb-1 d-flex align-items-center gap-2">
+                            Assigned Software & Licenses
+                            <span class="badge bg-light-secondary text-secondary px-2 py-1 rounded-pill small" style="font-size: 0.75rem;">{{ $softwareCount }}</span>
+                        </h5>
                         <p class="text-muted small mb-0">Subscriptions linked to this asset.</p>
                     </div>
                     <div class="d-flex align-items-center gap-3">
@@ -552,12 +444,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $deviceAllocations = \App\Models\SubscriptionAllocation::with('subscription.account')
-                                            ->where('assignable_type', 'App\Models\Device')
-                                            ->where('assignable_id', $device->id)
-                                            ->get();
-                                    @endphp
                                     @forelse($deviceAllocations as $allocation)
                                         @if($allocation->subscription)
                                             <tr>
@@ -594,6 +480,125 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card border-0">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseService" aria-expanded="{{ $serviceOpen ? 'true' : 'false' }}">
+                    <div>
+                        <h5 class="card-title fw-bold mb-1 d-flex align-items-center gap-2">
+                            Service & Maint. Logs
+                            <span class="badge bg-light-secondary text-secondary px-2 py-1 rounded-pill small" style="font-size: 0.75rem;">{{ $services->total() }}</span>
+                        </h5>
+                        <p class="text-muted small mb-0">Record of repairs and costs.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <button data-bs-toggle="modal" data-bs-target="#service-modal" class="btn btn-sm btn-light-warning text-warning fw-bold px-4 py-2 rounded-pill shadow-none d-flex align-items-center gap-2" onclick="event.stopPropagation();">
+                            <i class="bi bi-tools icon-fix"></i> LOG SERVICE
+                        </button>
+                        <i class="bi bi-chevron-down text-muted fs-5 accordion-chevron icon-fix"></i>
+                    </div>
+                </div>
+                <div id="collapseService" class="collapse {{ $serviceOpen ? 'show' : '' }}">
+                    <div class="card-body p-0 border-top mt-3">
+                        <div class="d-flex justify-content-between align-items-center p-4 bg-transparent border-bottom">
+                            <span class="fw-bold text-muted small text-uppercase">Total Cost: <span class="text-danger fs-5 ms-1">IDR {{ number_format($device->serviceHistories->sum('cost'), 2) }}</span></span>
+                        </div>
+                        <div id="ajax-service-container">
+                            <ul class="list-group list-group-flush list-group-custom">
+                                @forelse($services as $history)
+                                    <li class="list-group-item p-4 bg-transparent">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="fw-bold text-heading">{{ \Carbon\Carbon::parse($history->service_date)->format('M d, Y') }}</span>
+                                            <span class="badge {{ $history->cost ? 'bg-light-danger text-danger' : 'bg-light-secondary text-secondary' }} px-3 py-2 rounded-pill">
+                                                {{ $history->cost ? 'Rp '.number_format($history->cost, 0) : 'No Cost' }}
+                                            </span>
+                                        </div>
+                                        <p class="mb-0 text-muted small">{{ $history->description }}</p>
+                                    </li>
+                                @empty
+                                    <li class="list-group-item p-5 text-center border-0 bg-transparent">
+                                        <i class="bi bi-wrench empty-state-icon d-block"></i>
+                                        <span class="text-muted fw-semibold small">No service records found.</span>
+                                    </li>
+                                @endforelse
+                            </ul>
+                            @if($services->hasPages())
+                                <div class="p-3 border-top bg-transparent">
+                                    {{ $services->links() }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center cursor-pointer collapse-toggle" data-bs-toggle="collapse" data-bs-target="#collapseLifecycle" aria-expanded="{{ $logsOpen ? 'true' : 'false' }}">
+                    <div>
+                        <h5 class="card-title fw-bold mb-1 d-flex align-items-center gap-2">
+                            Lifecycle History
+                            <span class="badge bg-light-secondary text-secondary px-2 py-1 rounded-pill small" style="font-size: 0.75rem;">{{ $logs->total() }}</span>
+                        </h5>
+                        <p class="text-muted small mb-0">Complete audit trail for this asset.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-chevron-down text-muted fs-5 accordion-chevron icon-fix"></i>
+                    </div>
+                </div>
+                <div id="collapseLifecycle" class="collapse {{ $logsOpen ? 'show' : '' }}">
+                    <div class="card-body p-0 border-top mt-3">
+                        <div id="ajax-lifecycle-container">
+                            <div class="p-4" style="max-height: 400px; overflow-y: auto;">
+                                <ul class="list-group list-group-flush">
+                                    @forelse($logs as $log)
+                                        <li class="list-group-item px-0 border-0 d-flex align-items-start mb-3 bg-transparent">
+                                            <div class="text-end me-3 mt-1" style="width: 50px;">
+                                                <span class="text-primary fw-bold small d-block">{{ $log->created_at->format('M d') }}</span>
+                                            </div>
+                                            <div class="p-3 rounded-3 flex-grow-1 timeline-box">
+                                                <h6 class="fw-bold text-heading small text-uppercase mb-1">{{ $log->action }}</h6>
+                                                <p class="mb-0 text-muted small">{{ $log->description }}</p>
+                                            </div>
+                                        </li>
+                                    @empty
+                                        <li class="list-group-item text-center py-4 border-0 bg-transparent">
+                                            <i class="bi bi-inbox empty-state-icon d-block"></i>
+                                            <span class="text-muted fw-semibold small">No history records yet.</span>
+                                        </li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                            @if($logs->hasPages())
+                                <div class="p-3 border-top bg-transparent">
+                                    {{ $logs->links() }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if($device->image1 || $device->image2 || $device->image3)
+            <div class="card border-0">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold mb-1">Asset Gallery</h5>
+                    <p class="text-muted small mb-0">Visual documentation of this hardware.</p>
+                </div>
+                <div class="card-body py-4">
+                    <div class="row g-3">
+                        @foreach(['image1', 'image2', 'image3'] as $img)
+                            @if($device->$img)
+                            <div class="col-12 col-md-4">
+                                <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#image-lightbox-modal" onclick="document.getElementById('lightbox-image').src='{{ asset('storage/' . $device->$img) }}'" class="d-block">
+                                    <img src="{{ asset('storage/' . $device->$img) }}" class="img-fluid rounded border shadow-sm hover-zoom" style="height: 200px; width: 100%; object-fit: cover;" alt="Asset Image">
+                                </a>
+                            </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @endif
+
         </div>
     </div>
 @endsection
@@ -721,17 +726,28 @@
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Size / Specs</label><input type="text" name="size" value="{{ $device->size }}" class="form-control"></div>
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" value="{{ $device->current_health }}" class="form-control"></div>
                             </div>
+                            
                             <div class="row g-3 mb-4">
-                                <div class="col-12">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Assigned User</label>
+                                    <select name="employee_id" class="form-select">
+                                        <option value="">-- Unassigned (STOCK) --</option>
+                                        @foreach($employees as $emp)
+                                            <option value="{{ $emp->id }}" {{ $device->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Attach to Device</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach($stockItems as $targetDevice)
+                                        @foreach(\App\Models\Device::whereIn('category', ['PC', 'Laptop', 'Phone'])->get() as $targetDevice)
                                             <option value="{{ $targetDevice->id }}" {{ $device->parent_id == $targetDevice->id ? 'selected' : '' }}>{{ $targetDevice->name }} ({{ $targetDevice->category }})</option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
+
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" value="{{ $device->purchase_date ? $device->purchase_date->format('Y-m-d') : '' }}" class="form-control"></div>
                                 <div class="col-12 col-md-6">

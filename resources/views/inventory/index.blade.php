@@ -207,6 +207,17 @@
                                     <input type="text" name="model" class="form-control">
                                 </div>
                             </div>
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Keyboard</label>
+                                    <input type="text" name="keyboard" class="form-control" placeholder="e.g., Logitech K120">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Mouse</label>
+                                    <input type="text" name="mouse" class="form-control" placeholder="e.g., Logitech B100">
+                                </div>
+                            </div>
 
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
@@ -280,8 +291,18 @@
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Size / Specs</label><input type="text" name="size" class="form-control"></div>
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Initial Health %</label><input type="number" name="current_health" value="100" class="form-control"></div>
                             </div>
+                            
                             <div class="row g-3 mb-4">
-                                <div class="col-12">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Assigned User</label>
+                                    <select name="employee_id" class="form-select">
+                                        <option value="">-- Unassigned (STOCK) --</option>
+                                        @foreach(\App\Models\Employee::all() as $emp)
+                                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Attach to Device</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
@@ -291,6 +312,7 @@
                                     </select>
                                 </div>
                             </div>
+
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" class="form-control"></div>
                                 <div class="col-12 col-md-6">
@@ -356,6 +378,17 @@
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Model</label>
                                     <input type="text" name="model" value="{{ $item->model }}" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Keyboard</label>
+                                    <input type="text" name="keyboard" value="{{ $item->keyboard ?? '' }}" class="form-control" placeholder="e.g., Logitech K120">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Mouse</label>
+                                    <input type="text" name="mouse" value="{{ $item->mouse ?? '' }}" class="form-control" placeholder="e.g., Logitech B100">
                                 </div>
                             </div>
 
@@ -431,8 +464,18 @@
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Size / Specs</label><input type="text" name="size" value="{{ $item->size }}" class="form-control"></div>
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" value="{{ $item->current_health }}" class="form-control"></div>
                             </div>
+                            
                             <div class="row g-3 mb-4">
-                                <div class="col-12">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label text-muted fw-bold small">Assigned User</label>
+                                    <select name="employee_id" class="form-select">
+                                        <option value="">-- Unassigned (STOCK) --</option>
+                                        @foreach(\App\Models\Employee::all() as $emp)
+                                            <option value="{{ $emp->id }}" {{ $item->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Attach to Device</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
@@ -442,6 +485,7 @@
                                     </select>
                                 </div>
                             </div>
+
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" value="{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}" class="form-control"></div>
                                 <div class="col-12 col-md-6">

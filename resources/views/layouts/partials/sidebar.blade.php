@@ -52,7 +52,8 @@
                     $isCoreComponentActive = request()->is(
                         'inventory/Motherboard', 'inventory/Processor', 'inventory/RAM', 
                         'inventory/SSD', 'inventory/HDD', 'inventory/GPU', 'inventory/Monitor', 
-                        'inventory/UPS', 'inventory/Power Supply', 'inventory/Battery'
+                        'inventory/UPS', 'inventory/Power Supply', 'inventory/Battery',
+                        'inventory/Keyboard', 'inventory/Mouse'
                     );
                 @endphp
                 <li class="sidebar-item has-sub {{ $isCoreComponentActive ? 'active' : '' }}">
@@ -61,7 +62,7 @@
                         <span>Core Components</span>
                     </a>
                     <ul class="submenu {{ $isCoreComponentActive ? 'active' : '' }}">
-                        @foreach(['Motherboard', 'Processor', 'RAM', 'SSD', 'HDD', 'GPU', 'Monitor', 'UPS', 'Power Supply', 'Battery'] as $nav)
+                        @foreach(['Motherboard', 'Processor', 'RAM', 'SSD', 'HDD', 'GPU', 'Monitor', 'UPS', 'Power Supply', 'Battery', 'Keyboard', 'Mouse'] as $nav)
                         <li class="submenu-item {{ request()->is('inventory/'.$nav) ? 'active' : '' }}">
                             <a href="{{ route('inventory.index', $nav) }}" class="submenu-link">{{ $nav }}</a>
                         </li>
