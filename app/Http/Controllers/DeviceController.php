@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -24,8 +24,8 @@ class DeviceController extends Controller
         }
 
         // Fetch items with assigned employees
-        $items = $query->with('employee')->latest()->get();
-        $employees = Employee::orderBy('name')->get();
+        $items = $query->with('user')->latest()->get();
+        $employees = User::orderBy('name')->get();
 
         return view('inventory.index', compact('items', 'category', 'employees'));
     }
@@ -36,7 +36,7 @@ class DeviceController extends Controller
     public function show($id)
     {
         $device = Device::with([
-            'employee.department', 
+            'user.department', 
             'components', 
             'parentDevice',
             'serviceHistories', 
@@ -44,12 +44,12 @@ class DeviceController extends Controller
             'healthRecords'
         ])->findOrFail($id);
 
-        $employees = Employee::orderBy('name')->get();
-        
+        $employees = User::orderBy('name')->get();
+
         // Fetch unassigned components that can be attached to this device
         $stockItems = Device::where('device_group', 'Peripheral')
                             ->whereNull('parent_id')
-                            ->whereNull('employee_id')
+                            ->whereNull('user_id')
                             ->orderBy('category')
                             ->get();
 
@@ -68,7 +68,7 @@ class DeviceController extends Controller
             'device_password' => 'nullable|string',
             'model'          => 'nullable|string',
             'purchase_date'  => 'nullable|date',
-            'employee_id'    => 'nullable|exists:employees,id',
+            'user_id'    => 'nullable|exists:users,id',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
             'size'           => 'nullable|string',
@@ -129,7 +129,7 @@ class DeviceController extends Controller
             'device_password' => 'nullable|string',
             'model'          => 'nullable|string',
             'purchase_date'  => 'nullable|date',
-            'employee_id'    => 'nullable|exists:employees,id',
+            'user_id'    => 'nullable|exists:users,id',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
             'size'           => 'nullable|string',
@@ -185,13 +185,13 @@ class DeviceController extends Controller
         }
 
         // Track ownership changes for logs
-        if ($request->filled('employee_id') && $device->employee_id != $request->employee_id) {
-            $newOwner = Employee::find($request->employee_id);
+        if ($request->filled('user_id') && $device->user_id != $request->user_id) {
+            $newOwner = User::find($request->user_id);
             $device->activityLogs()->create([
                 'action'      => 'Reassigned',
                 'description' => 'Assigned to ' . $newOwner->name,
             ]);
-        } elseif (array_key_exists('employee_id', $data) && empty($data['employee_id']) && $device->employee_id) {
+        } elseif (array_key_exists('user_id', $data) && empty($data['user_id']) && $device->user_id) {
             $device->activityLogs()->create([
                 'action'      => 'Returned to Stock',
                 'description' => 'Asset ownership removed.',
@@ -286,7 +286,7 @@ class DeviceController extends Controller
 
         $child->update([
             'parent_id'   => $parent->id,
-            'employee_id' => null, // Attached components take on the parent's environment
+            'user_id' => null, // Attached components take on the parent's environment
         ]);
 
         $parent->activityLogs()->create([

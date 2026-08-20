@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Subscription;
 use App\Models\Account;
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\Device;
 use App\Models\SubscriptionAllocation;
 
@@ -24,7 +24,7 @@ class SubscriptionController extends Controller
     {
         $subscription->load(['account', 'allocations.assignable']);
         
-        $employees = Employee::orderBy('name')->get();
+        $employees = User::orderBy('name')->get();
         $devices = Device::whereIn('category', ['PC', 'Laptop', 'Phone'])->orderBy('name')->get();
         
         return view('subscriptions.show', compact('subscription', 'employees', 'devices'));

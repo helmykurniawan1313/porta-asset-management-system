@@ -112,8 +112,8 @@
             </a>
             <div class="d-flex align-items-center gap-3">
                 <h2 class="mb-0 fw-bold text-heading tracking-tight d-flex align-items-center">{{ $device->name }}</h2>
-                <span class="badge {{ $device->employee_id || $device->parent_id ? 'bg-light-success text-success' : 'bg-light-primary text-primary' }} px-3 py-2 rounded-pill fw-bold d-flex align-items-center">
-                    {{ $device->employee_id || $device->parent_id ? 'IN USE' : 'IN STOCK' }}
+                <span class="badge {{ $device->user_id || $device->parent_id ? 'bg-light-success text-success' : 'bg-light-primary text-primary' }} px-3 py-2 rounded-pill fw-bold d-flex align-items-center">
+                    {{ $device->user_id || $device->parent_id ? 'IN USE' : 'IN STOCK' }}
                 </span>
             </div>
         </div>
@@ -203,15 +203,15 @@
                                     </p>
                                 </div>
                             </div>
-                        @elseif($device->employee)
+                        @elseif($device->user)
                             <div class="d-flex align-items-center gap-3">
                                 <div class="avatar avatar-lg bg-light-primary text-primary">
-                                    <span class="avatar-content fs-5 fw-bold d-flex align-items-center justify-content-center">{{ substr($device->employee->name, 0, 1) }}</span>
+                                    <span class="avatar-content fs-5 fw-bold d-flex align-items-center justify-content-center">{{ substr($device->user->name, 0, 1) }}</span>
                                 </div>
                                 <div>
-                                    <a href="{{ route('employees.show', $device->employee->id) }}" class="fw-bold text-heading fs-6 d-block">{{ $device->employee->name }}</a>
+                                    <a href="{{ route('employees.show', $device->user->id) }}" class="fw-bold text-heading fs-6 d-block">{{ $device->user->name }}</a>
                                     <p class="mb-0 text-muted fw-semibold small mt-1 d-flex align-items-center gap-2">
-                                        <i class="bi bi-building icon-fix"></i> {{ $device->employee->department->name ?? 'No Department' }}
+                                        <i class="bi bi-building icon-fix"></i> {{ $device->user->department->name ?? 'No Department' }}
                                     </p>
                                 </div>
                             </div>
@@ -657,10 +657,10 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
                                         @foreach($employees as $emp)
-                                            <option value="{{ $emp->id }}" {{ $device->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                            <option value="{{ $emp->id }}" {{ $device->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -693,9 +693,9 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach($employees as $emp) <option value="{{ $emp->id }}" {{ $device->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option> @endforeach
+                                        @foreach($employees as $emp) <option value="{{ $emp->id }}" {{ $device->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option> @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -730,10 +730,10 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
                                         @foreach($employees as $emp)
-                                            <option value="{{ $emp->id }}" {{ $device->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                            <option value="{{ $emp->id }}" {{ $device->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

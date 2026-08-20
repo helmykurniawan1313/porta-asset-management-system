@@ -23,7 +23,7 @@ class Device extends Model
         'ram',
         'rom',
         'current_health',
-        'employee_id',
+        'user_id',
         'parent_id',
         'price',
         'image1',
@@ -43,9 +43,9 @@ class Device extends Model
        RELATIONSHIPS
     ========================================== */
        
-    public function employee()
+    public function user()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 
     public function parentDevice()
@@ -87,12 +87,12 @@ class Device extends Model
         static::updated(function ($device) {
             
             // 1. DETECT TRANSFER (Employee Changed)
-            if ($device->isDirty('employee_id')) {
-                $oldOwnerId = $device->getOriginal('employee_id');
-                $newOwnerId = $device->employee_id;
+            if ($device->isDirty('user_id')) {
+                $oldOwnerId = $device->getOriginal('user_id');
+                $newOwnerId = $device->user_id;
 
                 if (!is_null($newOwnerId)) {
-                    $newOwner = Employee::find($newOwnerId);
+                    $newOwner = User::find($newOwnerId);
                     ActivityLog::create([
                         'device_id'   => $device->id,
                         'action'      => 'Deployment',

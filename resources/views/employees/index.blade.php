@@ -6,22 +6,6 @@
 @section('styles')
     <link rel="stylesheet" href="{{ asset('assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" crossorigin href="{{ asset('assets/compiled/css/table-datatable-jquery.css') }}">
-    <style>
-        /* 1. Professional Floating Header - NO GRAY */
-      
-
-        /* 2. Dark Mode Polish */
-        .theme-dark #table1 thead th {
-            color: #8c9eff !important; 
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        /* 3. Row Hover Transitions */
-        .table-hover tbody tr:hover {
-            background-color: rgba(67, 94, 190, 0.03) !important;
-            transition: background-color 0.2s ease;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -41,7 +25,7 @@
                         Total: <span class="text-primary fw-bold">{{ count($employees) }}</span> active personnel.
                     </p>
                 </div>
-                
+
                 <div class="mt-3 mt-md-0">
                     <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
                         <i class="bi bi-person-plus me-1"></i> ADD EMPLOYEE
@@ -57,6 +41,8 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Department</th>
+                                <th>Job Title</th>
+                                <th>Role</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -68,6 +54,12 @@
                                 <td class="py-3">
                                     <span class="badge {{ $emp->department ? 'bg-light-primary text-primary' : 'bg-light-secondary text-secondary' }} px-3 rounded-pill" style="font-size: 0.65rem;">
                                         {{ $emp->department->name ?? 'UNASSIGNED' }}
+                                    </span>
+                                </td>
+                                <td class="text-muted py-3">{{ $emp->job_title ?? '-' }}</td>
+                                <td class="py-3">
+                                    <span class="badge bg-light-secondary text-secondary px-3 rounded-pill" style="font-size: 0.65rem;">
+                                        {{ $emp->getRoleNames()->join(', ') ?: 'NO ROLE' }}
                                     </span>
                                 </td>
                                 <td class="text-end py-3">
@@ -113,14 +105,26 @@
                         </div>
                         <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
-                            <input type="email" name="email" class="form-control form-control-lg fs-6">
+                            <input type="email" name="email" class="form-control form-control-lg fs-6" required>
                         </div>
-                        <div class="mb-2">
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Password</label>
+                            <input type="password" name="password" class="form-control form-control-lg fs-6" minlength="8" required>
+                        </div>
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Department Allocation</label>
                             <select name="department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- Select Department --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
+                            <select name="role" class="form-select form-select-lg fs-6" required>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role }}" {{ $role === 'Employee' ? 'selected' : '' }}>{{ $role }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -153,12 +157,29 @@
                             <label class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
                             <input type="email" name="email" value="{{ $emp->email }}" class="form-control form-control-lg fs-6">
                         </div>
-                        <div class="mb-2">
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Department Allocation</label>
                             <select name="department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- No Department --</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ $emp->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Job Title</label>
+                            <select name="job_title" class="form-select form-select-lg fs-6">
+                                <option value="">-- None --</option>
+                                @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $title)
+                                    <option value="{{ $title }}" {{ $emp->job_title === $title ? 'selected' : '' }}>{{ $title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
+                            <select name="role" class="form-select form-select-lg fs-6">
+                                @foreach($roles as $role)
+                                    <option value="{{ $role }}" {{ $emp->hasRole($role) ? 'selected' : '' }}>{{ $role }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -178,10 +199,9 @@
     <script src="{{ asset('assets/extensions/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/extensions/datatables.net/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-    
+
     <script>
         $(document).ready(function() {
-            // Initialize jQuery DataTables
             $('#table1').DataTable({
                 "pageLength": 10,
                 "language": {

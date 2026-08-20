@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventory/{device}', [DeviceController::class, 'destroy'])->name('inventory.destroy');
 
     /* --- HR & STAFF --- */
+    Route::post('/employees/import', [EmployeeController::class, 'importCsv'])->name('employees.import');
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
 

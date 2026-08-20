@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Employee;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -13,7 +13,7 @@ class EmployeesSheetExport implements FromCollection, WithHeadings, WithMapping,
     public function collection()
     {
         // Must have the word "return" right here!
-        return Employee::with(['department', 'devices'])->get(); 
+        return User::with(['department', 'devices'])->get();
     }
 
     public function map($employee): array

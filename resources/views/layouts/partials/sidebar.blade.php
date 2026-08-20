@@ -31,6 +31,7 @@
                     </a>
                 </li>
 
+                @hasanyrole('IT Admin|Super Admin')
                 @php
                     $isMainDeviceActive = request()->is('inventory/PC', 'inventory/Laptop', 'inventory/Phone');
                 @endphp
@@ -88,6 +89,15 @@
                     </ul>
                 </li>
 
+                <li class="sidebar-item {{ request()->is('inventory/logs') ? 'active' : '' }}">
+                    <a href="/inventory/logs" class='sidebar-link'>
+                        <i class="bi bi-journal-text"></i>
+                        <span>Activity History</span>
+                    </a>
+                </li>
+                @endhasanyrole
+
+                @hasanyrole('HR Admin|IT Admin|Super Admin')
                 <li class="sidebar-title">Management</li>
 
                 @php
@@ -107,11 +117,34 @@
                         </li>
                     </ul>
                 </li>
+                @endhasanyrole
 
-                <li class="sidebar-item {{ request()->is('inventory/logs') ? 'active' : '' }}">
-                    <a href="/inventory/logs" class='sidebar-link'>
-                        <i class="bi bi-journal-text"></i>
-                        <span>Activity History</span>
+                @hasanyrole('HR Admin|Super Admin')
+                @php
+                    $isReviewsActive = request()->routeIs('hr.*');
+                @endphp
+                <li class="sidebar-title">Performance Reviews</li>
+                <li class="sidebar-item has-sub {{ $isReviewsActive ? 'active' : '' }}">
+                    <a href="#" class='sidebar-link'>
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>HR & Reviews</span>
+                    </a>
+                    <ul class="submenu {{ $isReviewsActive ? 'active' : '' }}">
+                        <li class="submenu-item {{ request()->routeIs('hr.review-cycles.*') && !request()->routeIs('hr.review-cycles.templates.*') && !request()->routeIs('hr.review-cycles.assignments.*') ? 'active' : '' }}">
+                            <a href="{{ route('hr.review-cycles.index') }}" class="submenu-link">Review Cycles</a>
+                        </li>
+                        <li class="submenu-item {{ request()->routeIs('hr.employee-reviews.*') ? 'active' : '' }}">
+                            <a href="{{ route('hr.employee-reviews.index') }}" class="submenu-link">Employee Reviews</a>
+                        </li>
+                    </ul>
+                </li>
+                @endhasanyrole
+
+                <li class="sidebar-title">Personal</li>
+                <li class="sidebar-item {{ request()->routeIs('my-reviews.*') ? 'active' : '' }}">
+                    <a href="{{ route('my-reviews.index') }}" class='sidebar-link'>
+                        <i class="bi bi-person-check"></i>
+                        <span>My Reviews</span>
                     </a>
                 </li>
             </ul>

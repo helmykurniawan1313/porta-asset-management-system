@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentController extends Controller
 {
     public function index()
     {
-        // withCount() automatically creates an 'employees_count' variable for us!
-        $departments = Department::withCount('employees')->latest()->get();
+        $departments = Department::withCount('users')
+            ->with('headOfDepartment:id,name')
+            ->latest()
+            ->get();
+        $users = User::orderBy('name')->get(['id', 'name', 'department_id']);
 
-        return view('departments.index', compact('departments'));
+        return view('departments.index', compact('departments', 'users'));
     }
 
     public function store(Request $request)
@@ -28,16 +33,35 @@ class DepartmentController extends Controller
         return back()->with('success', 'Department created successfully!');
     }
 
+    /**
+     * Assigning a new Head of Department sets that user's job_title to
+     * "Head of Department"; the previous head (if any and if different)
+     * has their job_title cleared back to null since it's no longer accurate.
+     */
     public function update(Request $request, Department $department)
     {
-        $request->validate([
+        $data = $request->validate([
             // The unique rule ignores the current department so you can save without changing the name
             'name' => 'required|string|max:255|unique:departments,name,' . $department->id,
+            'head_of_department_id' => 'nullable|exists:users,id',
         ]);
 
-        $department->update([
-            'name' => $request->name
-        ]);
+        $newHeadId = $data['head_of_department_id'] ?? null;
+        $previousHeadId = $department->head_of_department_id;
+
+        DB::transaction(function () use ($department, $data, $newHeadId, $previousHeadId) {
+            $department->update($data);
+
+            if ($newHeadId !== $previousHeadId) {
+                if ($previousHeadId) {
+                    User::where('id', $previousHeadId)->update(['job_title' => null]);
+                }
+
+                if ($newHeadId) {
+                    User::where('id', $newHeadId)->update(['job_title' => 'Head of Department']);
+                }
+            }
+        });
 
         return back()->with('success', 'Department updated successfully!');
     }

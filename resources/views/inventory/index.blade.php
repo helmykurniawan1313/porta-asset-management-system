@@ -115,7 +115,7 @@
                     @if(in_array($category, ['PC', 'Laptop', 'Dashboard']))
                         <td class="py-3">
                             <span class=" px-2 py-1">
-                                {{ $item->employee->name ?? 'STOCK' }}
+                                {{ $item->user->name ?? 'STOCK' }}
                             </span>
                         </td>
                     @elseif($category == 'Phone')
@@ -127,7 +127,7 @@
                         </td>
                         <td class="py-3">
                             <span class=" px-2 py-1">
-                                {{ $item->employee->name ?? 'STOCK' }}
+                                {{ $item->user->name ?? 'STOCK' }}
                             </span>
                         </td>
                     @else
@@ -222,9 +222,9 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp)
+                                        @foreach(\App\Models\User::all() as $emp)
                                             <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
@@ -258,9 +258,9 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp) <option value="{{ $emp->id }}">{{ $emp->name }}</option> @endforeach
+                                        @foreach(\App\Models\User::all() as $emp) <option value="{{ $emp->id }}">{{ $emp->name }}</option> @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -295,9 +295,9 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp)
+                                        @foreach(\App\Models\User::all() as $emp)
                                             <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
@@ -395,10 +395,10 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp)
-                                            <option value="{{ $emp->id }}" {{ $item->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                        @foreach(\App\Models\User::all() as $emp)
+                                            <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -431,9 +431,9 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp) <option value="{{ $emp->id }}" {{ $item->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option> @endforeach
+                                        @foreach(\App\Models\User::all() as $emp) <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option> @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -468,10 +468,10 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
-                                    <select name="employee_id" class="form-select">
+                                    <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Employee::all() as $emp)
-                                            <option value="{{ $emp->id }}" {{ $item->employee_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                        @foreach(\App\Models\User::all() as $emp)
+                                            <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

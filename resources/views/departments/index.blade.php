@@ -68,6 +68,7 @@
                         <thead>
                             <tr>
                                 <th>Department Name</th>
+                                <th>Head of Department</th>
                                 <th class="text-center">Staff Count</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -78,9 +79,12 @@
                                 <td class="fw-bold text-heading py-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">
                                     {{ $dept->name }}
                                 </td>
+                                <td class="py-3">
+                                    {{ $dept->headOfDepartment->name ?? '-' }}
+                                </td>
                                 <td class="text-center py-3">
                                     <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold" style="font-size: 0.65rem;">
-                                        {{ $dept->employees_count }} PERSONNEL
+                                        {{ $dept->users_count }} PERSONNEL
                                     </span>
                                 </td>
                                 <td class="text-end py-3">
@@ -143,9 +147,18 @@
                 <form action="{{ route('departments.update', $dept->id) }}" method="POST">
                     @csrf @method('PUT')
                     <div class="modal-body p-4 p-md-5">
-                        <div class="mb-2">
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Department Name</label>
                             <input type="text" name="name" value="{{ $dept->name }}" class="form-control form-control-lg fs-6" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Head of Department</label>
+                            <select name="head_of_department_id" class="form-select form-select-lg fs-6">
+                                <option value="">-- None --</option>
+                                @foreach($users->where('department_id', $dept->id) as $u)
+                                    <option value="{{ $u->id }}" {{ $dept->head_of_department_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer bg-light border-0">

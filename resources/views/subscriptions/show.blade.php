@@ -88,7 +88,7 @@
                                         {{ $alloc->assignable->name ?? 'Deleted Asset' }}
                                     </td>
                                     <td class="py-3">
-                                        @php $isStaff = str_contains($alloc->assignable_type, 'Employee'); @endphp
+                                        @php $isStaff = str_contains($alloc->assignable_type, 'User'); @endphp
                                         <span class="badge {{ $isStaff ? 'bg-light-warning text-warning' : 'bg-light-success text-success' }} px-3" style="font-size: 0.65rem;">
                                             {{ $isStaff ? 'STAFF MEMBER' : 'REGISTERED DEVICE' }}
                                         </span>
@@ -135,7 +135,7 @@
                             <option value="">-- Choose User or Device --</option>
                             <optgroup label="Staff Members">
                                 @foreach($employees as $emp) 
-                                    <option value="App\Models\Employee,{{ $emp->id }}">{{ $emp->name }}</option> 
+                                    <option value="App\Models\User,{{ $emp->id }}">{{ $emp->name }}</option>
                                 @endforeach
                             </optgroup>
                             <optgroup label="Registered Devices">

@@ -71,7 +71,7 @@
                                 <div class="mt-1 d-flex gap-2">
                                     @php
                                         $dCount = $sub->allocations->where('assignable_type', 'App\Models\Device')->count();
-                                        $uCount = $sub->allocations->where('assignable_type', 'App\Models\Employee')->count();
+                                        $uCount = $sub->allocations->where('assignable_type', 'App\Models\User')->count();
                                     @endphp
                                     <span class="badge {{ $dCount > 0 ? 'bg-light-success text-success' : 'bg-light-secondary text-secondary' }} border-0 px-2" style="font-size: 0.65rem;">
                                         {{ $dCount }} DEVICES
