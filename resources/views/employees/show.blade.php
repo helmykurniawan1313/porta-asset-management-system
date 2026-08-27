@@ -53,11 +53,18 @@
                 <div class="col mt-3 mt-md-0">
                     <h2 class="fw-bold mb-1">{{ $employee->name ?? 'Unnamed Employee' }}</h2>
                     <p class="text-muted fw-semibold mb-3">{{ $employee->email ?? 'No email provided' }}</p>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">ACTIVE</span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @if($employee->resigned_at)
+                            <span class="badge bg-light-danger text-danger px-3 rounded-pill fw-bold">RESIGNED {{ $employee->resigned_at->format('d/m/Y') }}</span>
+                        @else
+                            <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">ACTIVE</span>
+                        @endif
                         <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold">
                             {{ $employee->department->name ?? 'NO DEPARTMENT' }}
                         </span>
+                        @if($employee->joined_at)
+                            <span class="badge bg-light-secondary text-secondary px-3 rounded-pill fw-bold">JOINED {{ $employee->joined_at->format('d/m/Y') }}</span>
+                        @endif
                     </div>
                 </div>
                 <div class="col-12 col-md-auto mt-4 mt-md-0 text-md-end border-start-md ps-md-5">

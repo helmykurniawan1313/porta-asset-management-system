@@ -22,7 +22,7 @@
                 <div>
                     <h5 class="card-title mb-1">Employee Directory</h5>
                     <p class="text-muted small mb-0">
-                        Total: <span class="text-primary fw-bold">{{ count($employees) }}</span> active personnel.
+                        Total: <span class="text-primary fw-bold">{{ $employees->count() }}</span> personnel.
                     </p>
                 </div>
 
@@ -41,8 +41,11 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Department</th>
-                                <th>Job Title</th>
+                                <th>Position</th>
+                                @hasrole('Super Admin')
                                 <th>Role</th>
+                                @endhasrole
+                                <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -56,11 +59,28 @@
                                         {{ $emp->department->name ?? 'UNASSIGNED' }}
                                     </span>
                                 </td>
-                                <td class="text-muted py-3">{{ $emp->job_title ?? '-' }}</td>
+                                <td class="text-muted py-3">
+                                    {{ $emp->department->name ?? '-' }}
+                                    @if($emp->job_level)
+                                        <span class="text-muted small d-block">{{ $emp->job_level }}</span>
+                                    @endif
+                                </td>
+                                @hasrole('Super Admin')
                                 <td class="py-3">
                                     <span class="badge bg-light-secondary text-secondary px-3 rounded-pill" style="font-size: 0.65rem;">
                                         {{ $emp->getRoleNames()->join(', ') ?: 'NO ROLE' }}
                                     </span>
+                                </td>
+                                @endhasrole
+                                <td class="py-3">
+                                    @if($emp->resigned_at)
+                                        <span class="badge bg-light-danger text-danger px-3 rounded-pill" style="font-size: 0.65rem;">RESIGNED {{ $emp->resigned_at->format('d/m/Y') }}</span>
+                                    @else
+                                        <span class="badge bg-light-success text-success px-3 rounded-pill" style="font-size: 0.65rem;">ACTIVE</span>
+                                    @endif
+                                    <div class="text-muted small mt-1" style="font-size: 0.7rem;">
+                                        {{ $emp->joined_at ? 'Joined ' . $emp->joined_at->format('d/m/Y') : 'No join date' }}
+                                    </div>
                                 </td>
                                 <td class="text-end py-3">
                                     <div class="d-flex justify-content-end gap-2">
@@ -70,7 +90,7 @@
                                         <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $emp->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete employee?')">
+                                        <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete employee?')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
                                                 <i class="bi bi-trash"></i>
@@ -91,10 +111,10 @@
 @section('modals')
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">New Personnel Registration</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">New Personnel Registration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('employees.store') }}" method="POST">
                     @csrf
@@ -120,7 +140,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-2">
+                        @hasrole('Super Admin')
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
                             <select name="role" class="form-select form-select-lg fs-6" required>
                                 @foreach($roles as $role)
@@ -128,8 +149,31 @@
                                 @endforeach
                             </select>
                         </div>
+                        @else
+                        <p class="text-muted small mb-4">New employees are created with the baseline "Employee" role. Only a Super Admin can assign a different role.</p>
+                        @endhasrole
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Job Level</label>
+                            <select name="job_level" class="form-select form-select-lg fs-6">
+                                <option value="">-- None --</option>
+                                @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $level)
+                                    <option value="{{ $level }}">{{ $level }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Join</label>
+                                <input type="date" name="joined_at" class="form-control form-control-lg fs-6">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Resign</label>
+                                <input type="date" name="resigned_at" class="form-control form-control-lg fs-6">
+                                <small class="text-muted d-block mt-1">Leave blank if still active.</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">REGISTER EMPLOYEE</button>
                     </div>
@@ -141,10 +185,10 @@
     @foreach($employees as $emp)
     <div class="modal fade" id="edit-modal-{{ $emp->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">Update Employee Data</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Update Employee Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('employees.update', $emp->id) }}" method="POST">
                     @csrf @method('PUT')
@@ -167,15 +211,16 @@
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Job Title</label>
-                            <select name="job_title" class="form-select form-select-lg fs-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Job Level</label>
+                            <select name="job_level" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
-                                @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $title)
-                                    <option value="{{ $title }}" {{ $emp->job_title === $title ? 'selected' : '' }}>{{ $title }}</option>
+                                @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $level)
+                                    <option value="{{ $level }}" {{ $emp->job_level === $level ? 'selected' : '' }}>{{ $level }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-2">
+                        @hasrole('Super Admin')
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
                             <select name="role" class="form-select form-select-lg fs-6">
                                 @foreach($roles as $role)
@@ -183,8 +228,20 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endhasrole
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Join</label>
+                                <input type="date" name="joined_at" value="{{ $emp->joined_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Resign</label>
+                                <input type="date" name="resigned_at" value="{{ $emp->resigned_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
+                                <small class="text-muted d-block mt-1">Leave blank if still active.</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE PROFILE</button>
                     </div>
@@ -203,7 +260,7 @@
     <script>
         $(document).ready(function() {
             $('#table1').DataTable({
-                "pageLength": 10,
+                "pageLength": 15,
                 "language": {
                     "search": "Quick Filter:",
                     "lengthMenu": "Display _MENU_ users"

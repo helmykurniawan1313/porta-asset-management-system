@@ -114,7 +114,11 @@ class ReviewAssignmentController extends Controller
      * derived directly from the org chart — no manual reviewer/reviewee
      * picking needed. Upward: every staff member reviews their own
      * department's Head of Department. Downward: every Head of Department
-     * reviews every staff member in their own department.
+     * reviews every staff member in their own department. Only top-level
+     * departments have a Head — a department's staff pool for this purpose
+     * includes its own users plus every sub-department's users (e.g.
+     * Operational's head reviews/is-reviewed-by Finance, IT, HR, etc., not
+     * just people tagged directly as "Operational").
      */
     public function bulkOrgChart(Request $request, ReviewCycle $reviewCycle): RedirectResponse
     {
@@ -124,14 +128,14 @@ class ReviewAssignmentController extends Controller
             return Redirect::back()->withErrors(['review_type' => 'Bulk creation only supports upward or downward review types.']);
         }
 
-        $departments = Department::whereNotNull('head_of_department_id')->with('users')->get();
+        $departments = Department::whereNotNull('head_of_department_id')->get();
 
         $created = 0;
         $skipped = 0;
 
         foreach ($departments as $department) {
             $headId = $department->head_of_department_id;
-            $staff = $department->users->where('id', '!=', $headId);
+            $staff = $department->allUsers()->where('id', '!=', $headId)->get();
 
             foreach ($staff as $staffMember) {
                 [$reviewerId, $revieweeId] = $type === 'upward'

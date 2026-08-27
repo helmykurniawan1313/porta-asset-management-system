@@ -33,7 +33,7 @@ class EmployeeReviewReportBuilder
             ->with([
                 'reviewer:id,name',
                 'reviewResponses.question:id,review_template_id,text,type,order',
-                'reviewCycle:id,name',
+                'reviewCycle:id,name,starts_at',
                 'reviewCycle.reviewTemplates.questions' => fn ($q) => $q->orderBy('order'),
             ])
             ->get()
@@ -74,6 +74,7 @@ class EmployeeReviewReportBuilder
         // the question set and cycle name for this section.
         $template = $assignments->first()->reviewCycle->reviewTemplates->first();
         $cycleName = $assignments->first()->reviewCycle->name;
+        $cycleStartsAt = $assignments->first()->reviewCycle->starts_at;
         $questions = $template?->questions ?? collect();
 
         $ratingQuestions = $questions->where('type', 'rating_scale')->values();
@@ -129,6 +130,7 @@ class EmployeeReviewReportBuilder
         return [
             'type' => $type,
             'cycleName' => $cycleName,
+            'cycleStartsAt' => $cycleStartsAt,
             'templateName' => $template?->name,
             'reviewers' => $reviewers,
             'ratingRows' => $ratingRows,

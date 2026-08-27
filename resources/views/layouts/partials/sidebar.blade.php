@@ -3,7 +3,7 @@
         <div class="sidebar-header position-relative">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="logo">
-                    <a href="{{ route('inventory.index', 'Dashboard') }}">
+                    <a href="{{ route('dashboard') }}">
                         <span class="fs-4 text-primary font-bold tracking-tight uppercase">Porta IT</span>
                     </a>
                 </div>
@@ -24,14 +24,14 @@
             <ul class="menu">
                 <li class="sidebar-title">Menu</li>
 
-                <li class="sidebar-item {{ request()->is('inventory/Dashboard') || request()->is('/') ? 'active' : '' }}">
-                    <a href="{{ route('inventory.index', 'Dashboard') }}" class='sidebar-link'>
+                <li class="sidebar-item {{ request()->routeIs('dashboard') || request()->is('/') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard') }}" class='sidebar-link'>
                         <i class="bi bi-grid-fill"></i>
-                        <span>Overview</span>
+                        <span>Dashboard</span>
                     </a>
                 </li>
 
-                @hasanyrole('IT Admin|Super Admin')
+                @if(auth()->user()->hasAnyRole(['IT Admin', 'Super Admin']) || auth()->user()->isInDepartment('IT'))
                 @php
                     $isMainDeviceActive = request()->is('inventory/PC', 'inventory/Laptop', 'inventory/Phone');
                 @endphp
@@ -95,7 +95,30 @@
                         <span>Activity History</span>
                     </a>
                 </li>
-                @endhasanyrole
+                @endif
+
+                @can('access-client-ops')
+                @php
+                    $isClientOpsActive = request()->routeIs('clients.*') || request()->routeIs('invoices.*');
+                @endphp
+                <li class="sidebar-title">Client Ops</li>
+                <li class="sidebar-item has-sub {{ $isClientOpsActive ? 'active' : '' }}">
+                    <a href="#" class='sidebar-link'>
+                        <i class="bi bi-briefcase-fill"></i>
+                        <span>Client Ops</span>
+                    </a>
+                    <ul class="submenu {{ $isClientOpsActive ? 'active' : '' }}">
+                        <li class="submenu-item {{ request()->routeIs('clients.*') ? 'active' : '' }}">
+                            <a href="{{ route('clients.index') }}" class="submenu-link">Clients & Contracts</a>
+                        </li>
+                        @hasanyrole('Finance|Super Admin')
+                        <li class="submenu-item {{ request()->routeIs('invoices.*') ? 'active' : '' }}">
+                            <a href="{{ route('invoices.index') }}" class="submenu-link">Invoices</a>
+                        </li>
+                        @endhasanyrole
+                    </ul>
+                </li>
+                @endcan
 
                 @hasanyrole('HR Admin|IT Admin|Super Admin')
                 <li class="sidebar-title">Management</li>
@@ -141,10 +164,16 @@
                 @endhasanyrole
 
                 <li class="sidebar-title">Personal</li>
+                @php
+                    $pendingReviewCount = auth()->check() ? auth()->user()->reviewAssignmentsAsReviewer()->where('status', '!=', 'submitted')->count() : 0;
+                @endphp
                 <li class="sidebar-item {{ request()->routeIs('my-reviews.*') ? 'active' : '' }}">
-                    <a href="{{ route('my-reviews.index') }}" class='sidebar-link'>
+                    <a href="{{ route('my-reviews.index') }}" class='sidebar-link d-flex align-items-center'>
                         <i class="bi bi-person-check"></i>
                         <span>My Reviews</span>
+                        @if($pendingReviewCount > 0)
+                            <span class="badge rounded-pill sidebar-pending-badge ms-auto">{{ $pendingReviewCount }}</span>
+                        @endif
                     </a>
                 </li>
             </ul>

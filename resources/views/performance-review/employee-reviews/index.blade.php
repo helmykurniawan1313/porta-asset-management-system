@@ -5,10 +5,10 @@
 
 @section('content')
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h5 class="card-title mb-1">Per-Employee Review Summary</h5>
-                <p class="text-muted small mb-0">Total: <span class="text-primary fw-bold">{{ $summaries->count() }}</span> employees.</p>
+                <p class="text-muted small mb-0">Total: <span class="text-primary fw-bold">{{ $employees->total() }}</span> employees.</p>
             </div>
             <a href="{{ route('hr.employee-reviews.download-all') }}" class="btn btn-outline-primary btn-sm px-3 fw-bold">
                 <i class="bi bi-file-earmark-excel me-1"></i> EXPORT ALL (XLSX)
@@ -54,6 +54,12 @@
                     </tbody>
                 </table>
             </div>
+
+            @if($employees->hasPages())
+                <div class="mt-3">
+                    {{ $employees->links() }}
+                </div>
+            @endif
         </div>
     </div>
 @endsection

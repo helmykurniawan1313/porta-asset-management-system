@@ -72,7 +72,7 @@
                                     <button data-bs-toggle="modal" data-bs-target="#edit-account-modal-{{ $acc->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <form action="{{ route('accounts.destroy', $acc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Warning: Deleting this account will also delete all subscriptions tied to it. Proceed?')">
+                                    <form action="{{ route('accounts.destroy', $acc->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Warning: Deleting this account will also delete all subscriptions tied to it. Proceed?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
                                             <i class="bi bi-trash"></i>
@@ -94,10 +94,10 @@
 @section('modals')
 <div class="modal fade" id="add-account-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title text-white fw-bold text-uppercase" style="font-size: 0.9rem;">Register Master Account</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg hr-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Register Master Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('accounts.store') }}" method="POST">
                 @csrf
@@ -111,7 +111,7 @@
                         <input type="text" name="purpose" placeholder="e.g. Design Team Shared Logins" class="form-control form-control-lg fs-6">
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0">
+                <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SAVE ACCOUNT</button>
                 </div>
@@ -123,10 +123,10 @@
 @foreach($accounts as $acc)
 <div class="modal fade" id="edit-account-modal-{{ $acc->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title text-white fw-bold text-uppercase" style="font-size: 0.9rem;">Edit Account Info</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg hr-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Edit Account Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('accounts.update', $acc->id) }}" method="POST">
                 @csrf @method('PUT')
@@ -140,7 +140,7 @@
                         <input type="text" name="purpose" value="{{ $acc->purpose }}" class="form-control form-control-lg fs-6">
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0">
+                <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SAVE CHANGES</button>
                 </div>

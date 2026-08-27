@@ -4,11 +4,6 @@
 @section('header_title', 'Review Cycles')
 
 @section('content')
-    @if(session('status'))
-        <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-check-circle me-2"></i> Saved successfully.
-        </div>
-    @endif
     @if($errors->any())
         <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
             <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
@@ -65,7 +60,7 @@
                                     <button data-bs-toggle="modal" data-bs-target="#edit-cycle-{{ $cycle->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <form action="{{ route('hr.review-cycles.destroy', $cycle) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this review cycle?')">
+                                    <form action="{{ route('hr.review-cycles.destroy', $cycle) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this review cycle?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
                                             <i class="bi bi-trash"></i>
@@ -88,10 +83,10 @@
 @section('modals')
     <div class="modal fade" id="add-cycle-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">New Review Cycle</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">New Review Cycle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('hr.review-cycles.store') }}" method="POST">
                     @csrf
@@ -117,7 +112,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE</button>
                     </div>
@@ -129,10 +124,10 @@
     @foreach($reviewCycles as $cycle)
     <div class="modal fade" id="edit-cycle-{{ $cycle->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">Edit Review Cycle</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Edit Review Cycle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('hr.review-cycles.update', $cycle) }}" method="POST">
                     @csrf @method('PATCH')
@@ -158,7 +153,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE</button>
                     </div>

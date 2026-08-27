@@ -76,7 +76,7 @@
                         <td class="px-6 py-4 text-right">
                             <div class="flex justify-end gap-3">
                                 <a href="{{ route('inventory.show', $item->id) }}" class="text-[#3C50E0] font-bold text-xs uppercase hover:underline">View</a>
-                                <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Delete this item?')">
+                                <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirmDelete(this, 'Delete this item?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-500 font-bold text-xs uppercase hover:underline">Del</button>
                                 </form>

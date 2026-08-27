@@ -54,6 +54,10 @@ class QuestionController extends Controller
             }
         });
 
+        if ($request->wantsJson()) {
+            return response()->json(['status' => 'questions-reordered']);
+        }
+
         return Redirect::back()->with('status', 'questions-reordered');
     }
 }

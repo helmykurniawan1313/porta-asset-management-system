@@ -127,7 +127,7 @@
                             <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $item->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this asset?')">
+                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this asset?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
                                     <i class="bi bi-trash"></i>

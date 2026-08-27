@@ -68,13 +68,13 @@
                 </div>
                 
                 <div class="d-flex gap-2">
-                    <a href="{{ route('inventory.export', $category) }}" class="btn btn-light-success d-flex align-items-center gap-2 fw-semibold shadow-sm" style="font-size: 0.85rem;">
-                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    <a href="{{ route('inventory.export', $category) }}" class="btn btn-light-success btn-sm px-4 fw-bold shadow-sm">
+                        <i class="bi bi-file-earmark-excel me-1"></i> EXPORT EXCEL
                     </a>
 
                     @if($category !== 'Dashboard')
-                    <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm" style="font-size: 0.85rem;">
-                        <i class="bi bi-plus-lg"></i> New {{ $category }}
+                    <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
+                        <i class="bi bi-plus-lg me-1"></i> NEW {{ strtoupper($category) }}
                     </button>
                     @endif
                 </div>
@@ -149,7 +149,7 @@
                             <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $item->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete item?')">
+                            <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete item?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3">
                                     <i class="bi bi-trash"></i>
@@ -159,7 +159,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="10" class="text-center py-5 text-muted">No records found.</td></tr>
+                <tr><td colspan="{{ in_array($category, ['PC', 'Laptop', 'Dashboard']) ? 5 : ($category == 'Phone' ? 6 : 8) }}" class="text-center py-5 text-muted">No records found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -173,10 +173,10 @@
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-md-down">
             <form action="{{ route('inventory.store') }}" method="POST" enctype="multipart/form-data" class="w-100 h-100">
-                <div class="modal-content border-0 shadow-sm h-100">
-                    <div class="modal-header bg-primary border-0">
-                        <h5 class="modal-title text-white fw-bold">Register New {{ $category }}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content border-0 shadow-sm h-100 hr-modal">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Register New {{ $category }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     
                     @csrf
@@ -333,7 +333,7 @@
 
                     </div>
                     
-                    <div class="modal-footer  border-0">
+                    <div class="modal-footer border-0">
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end w-100">
                             <button type="button" class="btn btn-light-secondary order-2 order-md-1" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm order-1 order-md-2">Save Asset</button>
@@ -348,10 +348,10 @@
     <div class="modal fade" id="edit-modal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-md-down">
             <form action="{{ route('inventory.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="w-100 h-100">
-                <div class="modal-content border-0 shadow-sm h-100">
-                    <div class="modal-header bg-primary border-0">
-                        <h5 class="modal-title text-white fw-bold">Edit {{ $category }} Details</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content border-0 shadow-sm h-100 hr-modal">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Edit {{ $category }} Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     
                     @csrf @method('PUT')
@@ -527,7 +527,7 @@
                         </div>
 
                     </div>
-                    <div class="modal-footer  border-0">
+                    <div class="modal-footer border-0">
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end w-100">
                             <button type="button" class="btn btn-light-secondary order-2 order-md-1" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm order-1 order-md-2">Save Changes</button>

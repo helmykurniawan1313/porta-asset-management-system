@@ -94,7 +94,7 @@
                                         </span>
                                     </td>
                                     <td class="text-end px-4 py-3">
-                                        <form action="{{ route('subscriptions.revoke', $alloc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Revoke this access?')">
+                                        <form action="{{ route('subscriptions.revoke', $alloc->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Revoke this access?')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-light-danger px-3 fw-bold text-uppercase" style="font-size: 0.65rem;">
                                                 Revoke Access
@@ -121,10 +121,10 @@
 @section('modals')
 <div class="modal fade" id="assign-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title text-white fw-bold text-uppercase" style="font-size: 0.9rem;">Assign Software License</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg hr-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Assign Software License</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('subscriptions.allocate', $subscription->id) }}" method="POST">
                 @csrf
@@ -149,7 +149,7 @@
                         </small>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0">
+                <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">GRANT ACCESS</button>
                 </div>

@@ -32,6 +32,7 @@
             </div>
 
             @if($template)
+                <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
@@ -57,6 +58,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             @else
                 <p class="text-muted">No template found for this cycle.</p>
             @endif

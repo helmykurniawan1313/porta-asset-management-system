@@ -21,10 +21,13 @@ class EmployeeReviewController extends Controller
     {
         $employees = User::with('department:id,name')
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'department_id']);
+            ->paginate(15, ['id', 'name', 'email', 'department_id']);
+
+        $employeeIds = $employees->pluck('id');
 
         $assignments = ReviewAssignment::query()
             ->select(['id', 'reviewee_id', 'review_type', 'status'])
+            ->whereIn('reviewee_id', $employeeIds)
             ->withCount([
                 'reviewResponses as rating_count' => fn ($q) => $q->whereNotNull('answer_rating'),
             ])
@@ -34,7 +37,7 @@ class EmployeeReviewController extends Controller
             ->get()
             ->groupBy('reviewee_id');
 
-        $summaries = $employees->map(function (User $employee) use ($assignments) {
+        $summaries = collect($employees->items())->map(function (User $employee) use ($assignments) {
             $rows = $assignments->get($employee->id, collect());
 
             $ratedRows = $rows->filter(fn ($row) => $row->rating_count > 0);
@@ -57,6 +60,7 @@ class EmployeeReviewController extends Controller
 
         return view('performance-review.employee-reviews.index', [
             'summaries' => $summaries->values(),
+            'employees' => $employees,
         ]);
     }
 

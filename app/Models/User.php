@@ -26,7 +26,9 @@ class User extends Authenticatable
         'email',
         'password',
         'department_id',
-        'job_title',
+        'job_level',
+        'joined_at',
+        'resigned_at',
     ];
 
     /**
@@ -49,6 +51,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'joined_at' => 'date',
+            'resigned_at' => 'date',
         ];
     }
 
@@ -58,38 +62,55 @@ class User extends Authenticatable
     }
 
     /**
-     * A person's manager is their department's Head of Department.
-     * Not stored directly — always derived, so it can never go stale
-     * relative to Department::head_of_department_id. Returns null for
-     * someone with no department, or for the Head of Department themselves
-     * (they have no manager in this system).
+     * A person's manager is their department's Head of Department. If their
+     * own department has no head (the common case for a sub-department —
+     * only top-level departments get a Head), this walks up to the parent
+     * department's head instead, so e.g. a Finance employee's manager is
+     * Operational's head, not left dangling with no manager at all. Not
+     * stored directly — always derived, so it can never go stale relative
+     * to Department::head_of_department_id. Returns null for someone with
+     * no department, or for the Head of Department themselves (they have no
+     * manager in this system).
      */
     public function manager(): ?User
     {
-        if (! $this->department_id) {
+        $department = $this->department;
+
+        if (! $department) {
             return null;
         }
 
-        $headId = $this->department?->head_of_department_id;
+        $headId = $department->head_of_department_id ?? $department->parent?->head_of_department_id;
 
         if (! $headId || $headId === $this->id) {
             return null;
         }
 
-        return $this->relationLoaded('department') && $this->department->relationLoaded('headOfDepartment')
-            ? $this->department->headOfDepartment
-            : User::find($headId);
+        return User::find($headId);
     }
 
     /**
-     * Direct reports are every other user in the same department whose
-     * Head of Department is this user. Empty if this user isn't a
-     * Head of Department.
+     * Direct reports are every other user this person is Head of Department
+     * for. For a top-level department's head, that includes everyone in
+     * that department AND everyone in its sub-departments (e.g. Operational's
+     * head sees Finance, IT, HR, etc.) — sub-departments don't have their
+     * own head, so their staff report to the parent's head. For someone who
+     * isn't a Head of Department anywhere, this is empty.
      */
-    public function directReports(): HasMany
+    public function directReports()
     {
-        return $this->hasMany(User::class, 'department_id', 'department_id')
-            ->whereHas('department', fn ($q) => $q->where('head_of_department_id', $this->id))
+        $headedDepartmentIds = Department::where('head_of_department_id', $this->id)->pluck('id');
+
+        if ($headedDepartmentIds->isEmpty()) {
+            return User::whereRaw('1 = 0');
+        }
+
+        $visibleDepartmentIds = Department::where(function ($q) use ($headedDepartmentIds) {
+            $q->whereIn('id', $headedDepartmentIds)
+                ->orWhereIn('parent_id', $headedDepartmentIds);
+        })->pluck('id');
+
+        return User::whereIn('department_id', $visibleDepartmentIds)
             ->where('id', '!=', $this->id);
     }
 
@@ -111,5 +132,34 @@ class User extends Authenticatable
     public function softwareAllocations()
     {
         return $this->morphMany(SubscriptionAllocation::class, 'assignable');
+    }
+
+    /**
+     * True if this user belongs to the named department, or to a
+     * sub-department of it (e.g. isInDepartment('Ops') matches someone in
+     * Ops itself or in Finance/HR/IT under Ops). Used to gate
+     * department-flavored menu sections (e.g. the IT department seeing the
+     * Inventory menu) independently of role, since role governs access
+     * level while department governs which functional area's menu applies.
+     */
+    public function isInDepartment(string $name): bool
+    {
+        $department = $this->department;
+
+        if (! $department) {
+            return false;
+        }
+
+        return $department->name === $name || $department->parent?->name === $name;
+    }
+
+    /**
+     * True if this user is Head of Department for the named department —
+     * used e.g. to grant the Account Manager department's head a view-all
+     * (but not edit) view over every client, regardless of who owns it.
+     */
+    public function isHeadOfDepartment(string $name): bool
+    {
+        return Department::where('name', $name)->where('head_of_department_id', $this->id)->exists();
     }
 }

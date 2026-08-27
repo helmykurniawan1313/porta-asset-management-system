@@ -1,0 +1,231 @@
+/* Porta IT — design overrides on top of the TailAdmin/Sneat base theme.
+   Goal: clean neutral SaaS surfaces, one accent color used sparingly. */
+
+:root,
+[data-bs-theme="light"] {
+    --porta-accent: #4f46e5;
+    --porta-accent-hover: #4338ca;
+    --porta-accent-soft: rgba(79, 70, 229, 0.1);
+    --porta-surface: #ffffff;
+    --porta-surface-muted: #f8f9fb;
+    --porta-border: #e5e7eb;
+    --porta-text: #1f2430;
+    --porta-text-muted: #6b7280;
+    --porta-sidebar-bg: #ffffff;
+    --porta-sidebar-border: #ececef;
+    --porta-sidebar-text: #4b5165;
+    --porta-sidebar-text-muted: #9aa0b0;
+    --porta-sidebar-active-bg: var(--porta-accent-soft);
+    --porta-sidebar-active-text: var(--porta-accent);
+    --porta-navbar-bg: #ffffff;
+    --porta-navbar-border: #ececef;
+    --porta-navbar-text: #1f2430;
+}
+
+[data-bs-theme="dark"] {
+    --porta-accent: #818cf8;
+    --porta-accent-hover: #a5b4fc;
+    --porta-accent-soft: rgba(129, 140, 248, 0.16);
+    --porta-surface: #171a23;
+    --porta-surface-muted: #12141b;
+    --porta-border: #2a2e3a;
+    --porta-text: #e7e9ee;
+    --porta-text-muted: #9aa0b0;
+    --porta-sidebar-bg: #12141b;
+    --porta-sidebar-border: #23262f;
+    --porta-sidebar-text: #b9bdc9;
+    --porta-sidebar-text-muted: #6c7284;
+    --porta-sidebar-active-bg: var(--porta-accent-soft);
+    --porta-sidebar-active-text: var(--porta-accent);
+    --porta-navbar-bg: #12141b;
+    --porta-navbar-border: #23262f;
+    --porta-navbar-text: #e7e9ee;
+}
+
+/* Sidebar */
+.sidebar-wrapper {
+    background-color: var(--porta-sidebar-bg) !important;
+    border-right: 1px solid var(--porta-sidebar-border);
+}
+
+.sidebar-header {
+    padding: 1.5rem 1.5rem 1rem !important;
+    font-size: 1.4rem !important;
+}
+
+.sidebar-menu {
+    padding: 0 0.75rem;
+}
+
+.sidebar-wrapper .logo a span {
+    color: var(--porta-text) !important;
+    letter-spacing: -0.01em;
+}
+
+.sidebar-wrapper .sidebar-title {
+    color: var(--porta-sidebar-text-muted) !important;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 1.5rem 0 0.5rem !important;
+    padding: 0 0.6rem !important;
+    white-space: nowrap;
+}
+
+.sidebar-wrapper .menu > .sidebar-title:first-child {
+    margin-top: 0.25rem !important;
+}
+
+.sidebar-wrapper .sidebar-item {
+    margin-top: 0.125rem !important;
+}
+
+.sidebar-wrapper .sidebar-link,
+.sidebar-wrapper .submenu-link {
+    color: var(--porta-sidebar-text) !important;
+    font-weight: 500;
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.875rem;
+    border-radius: 0.5rem !important;
+    background-color: transparent !important;
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.sidebar-wrapper .sidebar-link i,
+.sidebar-wrapper .sidebar-link svg {
+    color: var(--porta-sidebar-text-muted) !important;
+    fill: var(--porta-sidebar-text-muted) !important;
+    font-size: 1.05rem;
+    width: 1.25rem;
+    text-align: center;
+    transition: color 0.12s ease;
+}
+
+.sidebar-wrapper .sidebar-link:hover,
+.sidebar-wrapper .submenu-link:hover {
+    color: var(--porta-accent) !important;
+    background-color: var(--porta-accent-soft) !important;
+}
+
+.sidebar-wrapper .sidebar-link:hover i {
+    color: var(--porta-accent) !important;
+}
+
+.sidebar-wrapper .sidebar-item.active > .sidebar-link,
+.sidebar-wrapper .submenu-item.active > .submenu-link {
+    background-color: var(--porta-sidebar-active-bg) !important;
+    color: var(--porta-sidebar-active-text) !important;
+    font-weight: 600;
+}
+
+.sidebar-wrapper .sidebar-item.active > .sidebar-link span,
+.sidebar-wrapper .submenu-item.active > .submenu-link {
+    color: var(--porta-sidebar-active-text) !important;
+}
+
+.sidebar-wrapper .sidebar-item.active > .sidebar-link i,
+.sidebar-wrapper .sidebar-item.active > .sidebar-link svg {
+    color: var(--porta-sidebar-active-text) !important;
+    fill: var(--porta-sidebar-active-text) !important;
+}
+
+.sidebar-wrapper .submenu {
+    padding-left: 1.9rem;
+}
+
+.sidebar-wrapper .submenu-link {
+    font-size: 0.85rem;
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+}
+
+.sidebar-wrapper .theme-toggle {
+    color: var(--porta-sidebar-text-muted);
+}
+
+.sidebar-wrapper .sidebar-toggler a {
+    color: var(--porta-sidebar-text-muted);
+}
+
+.sidebar-pending-badge {
+    background-color: #ef4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Top navbar */
+.app-navbar-accent {
+    background-color: var(--porta-navbar-bg) !important;
+    border-bottom: 1px solid var(--porta-navbar-border);
+}
+
+.app-navbar-accent .burger-btn,
+.app-navbar-accent .burger-btn i,
+.app-navbar-accent .navbar-toggler-icon {
+    color: var(--porta-navbar-text) !important;
+}
+
+.app-navbar-accent .navbar-toggler {
+    border-color: var(--porta-navbar-border);
+}
+
+.app-navbar-accent .user-name h6 {
+    color: var(--porta-navbar-text) !important;
+}
+
+.app-navbar-accent .user-name p {
+    color: var(--porta-text-muted) !important;
+}
+
+.app-navbar-accent .avatar.bg-white {
+    background-color: var(--porta-accent) !important;
+    color: #fff !important;
+}
+
+/* Buttons: primary actions use the single accent color */
+.btn-primary {
+    background-color: var(--porta-accent) !important;
+    border-color: var(--porta-accent) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--porta-accent-hover) !important;
+    border-color: var(--porta-accent-hover) !important;
+}
+
+.btn-outline-primary {
+    color: var(--porta-accent) !important;
+    border-color: var(--porta-accent) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--porta-accent) !important;
+    border-color: var(--porta-accent) !important;
+    color: #fff !important;
+}
+
+a:not(.btn),
+.text-primary {
+    color: var(--porta-accent) !important;
+}
+
+/* Cards, tables, footer: quiet neutral surfaces with thin borders instead of heavy shadows */
+.card {
+    background-color: var(--porta-surface);
+    border: 1px solid var(--porta-border) !important;
+    box-shadow: none !important;
+}
+
+.app-footer-fixed {
+    background: var(--porta-surface) !important;
+    border-top: 1px solid var(--porta-border) !important;
+}
+
+body {
+    background-color: var(--porta-surface-muted);
+    color: var(--porta-text);
+}

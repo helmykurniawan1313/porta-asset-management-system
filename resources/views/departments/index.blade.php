@@ -74,7 +74,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($departments as $dept)
+                            @foreach($topLevelDepartments as $dept)
                             <tr>
                                 <td class="fw-bold text-heading py-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">
                                     {{ $dept->name }}
@@ -92,7 +92,7 @@
                                         <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $dept->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form action="{{ route('departments.destroy', $dept->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this department?')">
+                                        <form action="{{ route('departments.destroy', $dept->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this department?')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
                                                 <i class="bi bi-trash"></i>
@@ -101,6 +101,32 @@
                                     </div>
                                 </td>
                             </tr>
+                            @foreach($dept->children as $child)
+                            <tr>
+                                <td class="fw-bold text-heading py-3 text-uppercase ps-5" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-arrow-return-right text-muted me-1"></i>{{ $child->name }}
+                                </td>
+                                <td class="py-3 text-muted small">— reports to {{ $dept->name }}</td>
+                                <td class="text-center py-3">
+                                    <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold" style="font-size: 0.65rem;">
+                                        {{ $child->users_count }} PERSONNEL
+                                    </span>
+                                </td>
+                                <td class="text-end py-3">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $child->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form action="{{ route('departments.destroy', $child->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this department?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
                             @endforeach
                         </tbody>
                     </table>
@@ -113,21 +139,31 @@
 @section('modals')
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">New Department Setup</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">New Department Setup</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('departments.store') }}" method="POST">
                     @csrf
                     <div class="modal-body p-4 p-md-5">
-                        <div class="mb-2">
+                        <div class="mb-4">
                             <label class="form-label text-muted fw-bold small text-uppercase">Department Name</label>
                             <input type="text" name="name" class="form-control form-control-lg fs-6" placeholder="e.g. Finance, HR, IT Support" required>
                             <small class="text-muted d-block mt-2">Enter a unique name for the organizational unit.</small>
                         </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Parent Department</label>
+                            <select name="parent_id" class="form-select form-select-lg fs-6">
+                                <option value="">-- None (top-level department) --</option>
+                                @foreach($topLevelDepartments as $top)
+                                    <option value="{{ $top->id }}">{{ $top->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted d-block mt-2">Leave empty for a standalone department like "Design". Choose a parent to make this a sub-department, like "Finance" under "Operational".</small>
+                        </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE DEPARTMENT</button>
                     </div>
@@ -139,10 +175,10 @@
     @foreach($departments as $dept)
     <div class="modal fade" id="edit-modal-{{ $dept->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">Update Department</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Update Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('departments.update', $dept->id) }}" method="POST">
                     @csrf @method('PUT')
@@ -151,17 +187,38 @@
                             <label class="form-label text-muted fw-bold small text-uppercase">Department Name</label>
                             <input type="text" name="name" value="{{ $dept->name }}" class="form-control form-control-lg fs-6" required>
                         </div>
+
+                        @if($dept->children->isEmpty())
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Parent Department</label>
+                            <select name="parent_id" class="form-select form-select-lg fs-6">
+                                <option value="">-- None (top-level department) --</option>
+                                @foreach($topLevelDepartments->where('id', '!=', $dept->id) as $top)
+                                    <option value="{{ $top->id }}" {{ $dept->parent_id == $top->id ? 'selected' : '' }}>{{ $top->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @else
+                        <input type="hidden" name="parent_id" value="">
+                        <p class="text-muted small mb-4">This department has sub-departments, so it can't become a sub-department itself.</p>
+                        @endif
+
+                        @if(is_null($dept->parent_id))
                         <div class="mb-2">
                             <label class="form-label text-muted fw-bold small text-uppercase">Head of Department</label>
                             <select name="head_of_department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
-                                @foreach($users->where('department_id', $dept->id) as $u)
+                                @foreach($dept->allUsers()->get() as $u)
                                     <option value="{{ $u->id }}" {{ $dept->head_of_department_id == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                                 @endforeach
                             </select>
+                            <small class="text-muted d-block mt-2">Only top-level departments have a Head. This Head reviews/oversees this department and all its sub-departments.</small>
                         </div>
+                        @else
+                        <p class="text-muted small mb-0">Sub-departments don't have their own Head — staff here report up to {{ $dept->parent->name ?? 'the parent department' }}'s Head.</p>
+                        @endif
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE INFO</button>
                     </div>

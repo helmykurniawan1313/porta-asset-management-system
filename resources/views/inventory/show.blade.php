@@ -122,7 +122,7 @@
             <button data-bs-toggle="modal" data-bs-target="#edit-modal" class="btn btn-light-warning text-warning fw-bold px-4 shadow-sm d-flex align-items-center gap-2 rounded-pill">
                 <i class="bi bi-pencil-square icon-fix"></i> EDIT
             </button>
-            <form action="{{ route('inventory.destroy', $device->id) }}" method="POST" onsubmit="return confirm('Permanently delete this asset?')" class="m-0">
+            <form action="{{ route('inventory.destroy', $device->id) }}" method="POST" onsubmit="return confirmDelete(this, 'Permanently delete this asset?')" class="m-0">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-light-danger text-danger fw-bold px-4 shadow-sm d-flex align-items-center gap-2 h-100 rounded-pill">
                     <i class="bi bi-trash-fill icon-fix"></i> DELETE
@@ -621,10 +621,10 @@
     <div class="modal fade" id="edit-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-md-down">
             <form action="{{ route('inventory.update', $device->id) }}" method="POST" enctype="multipart/form-data" class="w-100 h-100">
-                <div class="modal-content border-0 shadow-sm h-100">
-                    <div class="modal-header bg-primary border-0">
-                        <h5 class="modal-title text-white fw-bold">Edit {{ $device->category }} Details</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content border-0 shadow-sm h-100 hr-modal">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Edit {{ $device->category }} Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     
                     @csrf @method('PUT')
@@ -788,7 +788,7 @@
                         </div>
 
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end w-100">
                             <button type="button" class="btn btn-light-secondary rounded-pill order-2 order-md-1" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm order-1 order-md-2">Save Changes</button>
@@ -801,10 +801,10 @@
 
     <div class="modal fade" id="attach-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-sm">
-                <div class="modal-header bg-primary border-0">
-                    <h5 class="modal-title text-white fw-bold">Attach Component</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-sm hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Attach Component</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('inventory.attach') }}" method="POST">
                     @csrf
@@ -824,7 +824,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Complete Installation</button>
                     </div>
@@ -835,10 +835,10 @@
 
     <div class="modal fade" id="service-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-sm">
-                <div class="modal-header bg-warning border-0">
-                    <h5 class="modal-title text-white fw-bold">Log Maintenance/Service</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-sm hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Log Maintenance/Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('inventory.service', $device->id) }}" method="POST">
                     @csrf
@@ -861,7 +861,7 @@
                             <textarea name="description" rows="3" class="form-control" placeholder="e.g., Replaced cracked screen..." required></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-warning rounded-pill text-white px-4 fw-bold shadow-sm">Save Log</button>
                     </div>
@@ -872,10 +872,10 @@
 
     <div class="modal fade" id="health-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-sm">
-                <div class="modal-header bg-success border-0">
-                    <h5 class="modal-title text-white fw-bold">Log Health Diagnostic</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-sm hr-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Log Health Diagnostic</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('inventory.health', $device->id) }}" method="POST">
                     @csrf
@@ -889,7 +889,7 @@
                             <input type="number" name="health_percentage" value="{{ $device->current_health }}" class="form-control" min="0" max="100" required>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm text-white">Save Record</button>
                     </div>

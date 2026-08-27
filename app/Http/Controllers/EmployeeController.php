@@ -11,13 +11,15 @@ use Spatie\Permission\Models\Role;
 class EmployeeController extends Controller
 {
     /**
-     * Expected CSV header (first row): name,email,password,department,role,job_title
-     * (job_title is optional and may be blank/omitted for any row). A person's
-     * manager is derived from their department's Head of Department — not set here.
+     * Expected CSV header (first row): name,email,password,department,role,job_level
+     * (job_level is optional and may be blank/omitted for any row) — seniority
+     * (Intern, Probation, Junior Associate, Associate, Senior Associate). A
+     * person's job title is their department; their manager is derived from
+     * that department's Head of Department — not set here.
      */
     public function index()
     {
-        $employees = User::with('department')->orderBy('name')->paginate(20);
+        $employees = User::with(['department', 'roles'])->orderBy('name')->get();
         $departments = Department::orderBy('name')->get(['id', 'name']);
         $roles = Role::orderBy('name')->pluck('name');
 
@@ -26,22 +28,33 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        $isSuperAdmin = $request->user()->hasRole('Super Admin');
+
         $data = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'department_id' => 'nullable|exists:departments,id',
-            'role' => 'required|string|exists:roles,name',
-            'job_title' => 'nullable|in:Intern,Probation,Junior Associate,Associate,Senior Associate',
+            'role' => $isSuperAdmin ? 'required|string|exists:roles,name' : 'nullable',
+            'job_level' => 'nullable|in:Intern,Probation,Junior Associate,Associate,Senior Associate',
+            'joined_at' => 'nullable|date',
+            'resigned_at' => 'nullable|date|after_or_equal:joined_at',
         ]);
+
+        // Only a Super Admin can choose a role for the new account; anyone
+        // else creating an employee gets them defaulted to the baseline
+        // "Employee" role, which a Super Admin can change later.
+        $role = $isSuperAdmin ? $data['role'] : 'Employee';
 
         $this->createEmployee(
             $data['name'],
             $data['email'],
             $data['password'],
             $data['department_id'] ?? null,
-            $data['role'],
-            $data['job_title'] ?? null,
+            $role,
+            $data['job_level'] ?? null,
+            $data['joined_at'] ?? null,
+            $data['resigned_at'] ?? null,
         );
 
         return back()->with('success', 'Employee added successfully!');
@@ -70,7 +83,7 @@ class EmployeeController extends Controller
         if (! empty($missing)) {
             fclose($handle);
 
-            return back()->withErrors(['file' => 'CSV header missing columns: '.implode(', ', $missing).'. Expected header: name,email,password,department,role,job_title']);
+            return back()->withErrors(['file' => 'CSV header missing columns: '.implode(', ', $missing).'. Expected header: name,email,password,department,role,job_level']);
         }
 
         $rowNumber = 1;
@@ -86,7 +99,7 @@ class EmployeeController extends Controller
             $record = array_combine($header, array_pad($row, count($header), null));
 
             try {
-                $this->importRow($record, $rowNumber, $results);
+                $this->importRow($record, $rowNumber, $results, $request->user()->hasRole('Super Admin'));
             } catch (\Throwable $e) {
                 $results['failed'][] = [
                     'row' => $rowNumber,
@@ -104,14 +117,22 @@ class EmployeeController extends Controller
         ]);
     }
 
-    protected function importRow(array $record, int $rowNumber, array &$results): void
+    protected function importRow(array $record, int $rowNumber, array &$results, bool $isSuperAdmin): void
     {
         $name = trim((string) ($record['name'] ?? ''));
         $email = trim((string) ($record['email'] ?? ''));
         $password = (string) ($record['password'] ?? '');
         $departmentName = trim((string) ($record['department'] ?? ''));
         $role = trim((string) ($record['role'] ?? ''));
-        $jobTitle = trim((string) ($record['job_title'] ?? ''));
+        $jobLevel = trim((string) ($record['job_level'] ?? ''));
+
+        // Only a Super Admin can assign a role via import; anyone else's CSV
+        // rows are silently forced to the baseline "Employee" role instead
+        // of whatever the file says, so a non-admin can't self-escalate by
+        // uploading a CSV with role=Super Admin.
+        if (! $isSuperAdmin) {
+            $role = 'Employee';
+        }
 
         if ($name === '' || $email === '' || $password === '' || $role === '') {
             $results['failed'][] = [
@@ -147,9 +168,9 @@ class EmployeeController extends Controller
             return;
         }
 
-        $validJobTitles = ['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'];
-        if ($jobTitle !== '' && ! in_array($jobTitle, $validJobTitles, true)) {
-            $results['failed'][] = ['row' => $rowNumber, 'email' => $email, 'reason' => "Invalid job_title '{$jobTitle}'. Head of Department is assigned via the Departments page, not here."];
+        $validJobLevels = ['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'];
+        if ($jobLevel !== '' && ! in_array($jobLevel, $validJobLevels, true)) {
+            $results['failed'][] = ['row' => $rowNumber, 'email' => $email, 'reason' => "Invalid job_level '{$jobLevel}'."];
 
             return;
         }
@@ -159,19 +180,28 @@ class EmployeeController extends Controller
             $departmentId = Department::firstOrCreate(['name' => $departmentName])->id;
         }
 
-        $this->createEmployee($name, $email, $password, $departmentId, $role, $jobTitle !== '' ? $jobTitle : null);
+        $this->createEmployee(
+            $name,
+            $email,
+            $password,
+            $departmentId,
+            $role,
+            $jobLevel !== '' ? $jobLevel : null,
+        );
 
         $results['success'][] = ['row' => $rowNumber, 'email' => $email];
     }
 
-    protected function createEmployee(string $name, string $email, string $password, ?int $departmentId, string $role, ?string $jobTitle = null): User
+    protected function createEmployee(string $name, string $email, string $password, ?int $departmentId, string $role, ?string $jobLevel = null, ?string $joinedAt = null, ?string $resignedAt = null): User
     {
         $user = User::create([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
             'department_id' => $departmentId,
-            'job_title' => $jobTitle,
+            'job_level' => $jobLevel,
+            'joined_at' => $joinedAt,
+            'resigned_at' => $resignedAt,
         ]);
 
         $user->assignRole($role);
@@ -180,34 +210,36 @@ class EmployeeController extends Controller
     }
 
     /**
-     * "Head of Department" is not a selectable option in this form (it's assigned
-     * via DepartmentController::update, which also sets job_title). If this employee
-     * currently holds that title, preserve it here rather than letting the form's
-     * blank job_title value silently clear it. Manager is not stored here at all —
-     * it's derived from department_id via User::manager().
+     * Manager is not stored here at all — it's derived from department_id
+     * via User::manager().
      */
     public function update(Request $request, User $employee)
     {
+        $isSuperAdmin = $request->user()->hasRole('Super Admin');
+
         $data = $request->validate([
             'name' => 'nullable|string',
             'email' => 'nullable|email|unique:users,email,' . $employee->id,
             'department_id' => 'nullable|exists:departments,id',
             'role' => 'nullable|string|exists:roles,name',
-            'job_title' => 'nullable|in:Intern,Probation,Junior Associate,Associate,Senior Associate',
+            'job_level' => 'nullable|in:Intern,Probation,Junior Associate,Associate,Senior Associate',
+            'joined_at' => 'nullable|date',
+            'resigned_at' => 'nullable|date|after_or_equal:joined_at',
         ]);
-
-        $jobTitle = $employee->job_title === 'Head of Department'
-            ? 'Head of Department'
-            : ($data['job_title'] ?? null);
 
         $employee->update([
             'name' => $data['name'] ?? $employee->name,
             'email' => $data['email'] ?? $employee->email,
             'department_id' => $data['department_id'] ?? null,
-            'job_title' => $jobTitle,
+            'job_level' => $data['job_level'] ?? null,
+            'joined_at' => $data['joined_at'] ?? null,
+            'resigned_at' => $data['resigned_at'] ?? null,
         ]);
 
-        if (! empty($data['role'])) {
+        // Only a Super Admin can change a user's role — everyone else's
+        // submitted role value (if any, e.g. from a tampered request) is
+        // silently ignored rather than applied.
+        if ($isSuperAdmin && ! empty($data['role'])) {
             $employee->syncRoles([$data['role']]);
         }
 

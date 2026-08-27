@@ -97,7 +97,7 @@
                                     <button type="button" data-bs-toggle="modal" data-bs-target="#edit-sub-modal-{{ $sub->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <form action="{{ route('inventory.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this subscription?')">
+                                    <form action="{{ route('inventory.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this subscription?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3">
                                             <i class="bi bi-trash"></i>
@@ -119,10 +119,10 @@
 @section('modals')
 <div class="modal fade" id="add-sub-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title text-white fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Register New Plan</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg hr-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Register New Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('subscriptions.store') }}" method="POST">
                 @csrf
@@ -165,7 +165,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0">
+                <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE SUBSCRIPTION</button>
                 </div>
@@ -177,10 +177,10 @@
 @foreach($subscriptions as $sub)
 <div class="modal fade" id="edit-sub-modal-{{ $sub->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title text-white fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Edit {{ $sub->plan }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg hr-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Edit {{ $sub->plan }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('subscriptions.update', $sub->id) }}" method="POST">
                 @csrf @method('PUT')
@@ -222,7 +222,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0">
+                <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE PLAN</button>
                 </div>

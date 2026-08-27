@@ -1,5 +1,5 @@
 <header>
-    <nav class="navbar navbar-expand navbar-light navbar-top">
+    <nav class="navbar navbar-expand navbar-top app-navbar-accent">
         <div class="container-fluid">
             <a href="#" class="burger-btn d-block">
                 <i class="bi bi-justify fs-3"></i>
@@ -10,7 +10,7 @@
                 aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav ms-auto mb-lg-0">
                     </ul>
@@ -18,11 +18,11 @@
                     <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="user-menu d-flex">
                             <div class="user-name text-end me-3">
-                                <h6 class="mb-0 text-gray-600">{{ Auth::user()->name ?? 'Administrator' }}</h6>
-                                <p class="mb-0 text-sm text-gray-600">{{ Auth::user()->email ?? 'admin@porta.com' }}</p>
+                                <h6 class="mb-0">{{ Auth::user()->name ?? 'Administrator' }}</h6>
+                                <p class="mb-0 text-sm">{{ Auth::user()->email ?? 'admin@porta.com' }}</p>
                             </div>
                             <div class="user-img d-flex align-items-center">
-                                <div class="avatar avatar-md bg-primary">
+                                <div class="avatar avatar-md bg-white text-primary">
                                     <span class="avatar-content">{{ substr(Auth::user()->name ?? 'A', 0, 1) }}</span>
                                 </div>
                             </div>

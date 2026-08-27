@@ -21,14 +21,14 @@
 
     <div class="modal fade" id="confirmUserDeletionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
+            <div class="modal-content border-0 shadow hr-modal">
                 <form method="post" action="{{ route('profile.destroy') }}">
                     @csrf
                     @method('delete')
 
-                    <div class="modal-header bg-danger border-bottom-0">
-                        <h5 class="modal-title text-white fw-bold">{{ __('Are you sure?') }}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">{{ __('Are you sure?') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body p-4">
@@ -47,7 +47,7 @@
                         </div>
                     </div>
 
-                    <div class="modal-footer bg-light border-top-0">
+                    <div class="modal-footer border-0">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                         <button type="submit" class="btn btn-danger ms-2 px-4 fw-bold">
                             {{ __('Delete Permanently') }}
