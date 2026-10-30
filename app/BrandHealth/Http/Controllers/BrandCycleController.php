@@ -298,10 +298,11 @@ class BrandCycleController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
+        // Quiet save: the summary doesn't affect scores, so skip re-resolving this cycle and its neighbours.
         $cycle->forceFill([
             'ai_summary' => $summary,
             'ai_summary_generated_at' => now(),
-        ])->save();
+        ])->saveQuietly();
 
         return response()->json([
             'ai_summary' => $summary,

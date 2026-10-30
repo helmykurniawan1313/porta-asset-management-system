@@ -6,12 +6,13 @@ use App\BrandHealth\Models\BrandCycle;
 use Illuminate\Console\Command;
 
 /**
- * Re-saves every Cycle so tier/needs_check/health_3c (resolved once at save
+ * Re-resolves every Cycle's tier/needs_check/health_3c (resolved once at save
  * time by Cycle::saving(), not recomputed on every page load like health_rate
- * itself) pick up any Settings change made since they were last saved — e.g.
- * editing a score bucket threshold, a formula weight, or an account_tier
- * boundary. Run manually (via this command, or the Settings UI button that
- * calls it) after making a scoring change you want reflected everywhere.
+ * itself) so they pick up any Settings change made since they were last saved
+ * — e.g. editing a score bucket threshold, a formula weight, or an
+ * account_tier boundary. Run manually (via this command, or the Settings UI
+ * button that does the same) after making a scoring change you want reflected
+ * everywhere, or after importing cycles straight into the table.
  */
 class RecalculateCycleScores extends Command
 {
@@ -21,15 +22,9 @@ class RecalculateCycleScores extends Command
 
     public function handle(): int
     {
-        $cycles = BrandCycle::orderBy('cycle_start_date')->get();
-        $total = $cycles->count();
+        $changed = BrandCycle::recalculateAll();
 
-        $this->withProgressBar($cycles, function (BrandCycle $cycle) {
-            $cycle->save();
-        });
-        $this->newLine(2);
-
-        $this->info("Recalculated {$total} cycles.");
+        $this->info('Recalculated '.BrandCycle::count()." cycles ({$changed} changed).");
 
         return self::SUCCESS;
     }

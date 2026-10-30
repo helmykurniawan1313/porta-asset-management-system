@@ -6,6 +6,7 @@ use App\BrandHealth\Models\BrandCycle;
 use App\BrandHealth\Models\BrandFormulaWeight;
 use App\BrandHealth\Models\BrandLabelBucket;
 use App\BrandHealth\Models\BrandScoreBucket;
+use Illuminate\Support\Collection;
 
 /**
  * health_3c smooths month-to-month Health swings into a trend line: the
@@ -15,10 +16,10 @@ use App\BrandHealth\Models\BrandScoreBucket;
  * than 3 cycles of history just averages however many exist (e.g. an
  * account's first cycle has no history, so health_3c == its own Health).
  *
- * Only resolved for the cycle being saved — editing an older cycle later
- * does NOT cascade a recompute onto newer cycles whose 3-cycle window
- * included it (those stay as they were until next saved themselves). This
- * matches how tier/needs_check already behave (self-contained per save).
+ * BrandCycle's model events keep neighbours in step: saving, moving or
+ * deleting a cycle re-resolves the next 2 cycles whose window included it.
+ * Scoring settings are loaded once per resolver instance, so reusing one
+ * instance across many cycles (bulk recalculation) doesn't re-query them.
  */
 class Health3cResolver
 {
@@ -27,13 +28,21 @@ class Health3cResolver
     ) {
     }
 
-    public function resolve(BrandCycle $cycle): array
-    {
-        $scoreBuckets = BrandScoreBucket::all();
-        $labelBuckets = BrandLabelBucket::all();
-        $formulaWeights = BrandFormulaWeight::all();
+    /** @var array{0: Collection, 1: Collection, 2: Collection}|null */
+    private ?array $settings = null;
 
-        $priorCycles = BrandCycle::where('account_id', $cycle->account_id)
+    /**
+     * @param  Collection<int, BrandCycle>|null  $priorCycles  Up to 2 earlier cycles of the same account + platform; queried if omitted.
+     */
+    public function resolve(BrandCycle $cycle, ?Collection $priorCycles = null): array
+    {
+        [$scoreBuckets, $labelBuckets, $formulaWeights] = $this->settings ??= [
+            BrandScoreBucket::all(),
+            BrandLabelBucket::all(),
+            BrandFormulaWeight::all(),
+        ];
+
+        $priorCycles ??= BrandCycle::where('account_id', $cycle->account_id)
             ->where('platform', $cycle->platform)
             ->where('cycle_start_date', '<', $cycle->cycle_start_date)
             ->when($cycle->exists, fn ($query) => $query->whereKeyNot($cycle->getKey()))
@@ -41,7 +50,7 @@ class Health3cResolver
             ->limit(2)
             ->get();
 
-        $window = $priorCycles->push($cycle);
+        $window = $priorCycles->concat([$cycle]);
 
         $healthRates = $window->map(
             fn (BrandCycle $c) => $this->calculator->calculate($c, $scoreBuckets, $labelBuckets, $formulaWeights)['health_rate']

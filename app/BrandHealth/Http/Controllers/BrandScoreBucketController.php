@@ -73,14 +73,14 @@ class BrandScoreBucketController extends Controller
      * saving()), not recomputed live on every page load like health_rate
      * itself — so a threshold/weight/tier-boundary change made here doesn't
      * retroactively update them on existing cycles until each one is saved
-     * again. This re-saves every cycle so they catch up with whatever
-     * Settings changes were made since.
+     * again. This re-resolves every cycle in one pass so they catch up with
+     * whatever Settings changes were made since.
      */
     public function recalculate(): RedirectResponse
     {
-        BrandCycle::orderBy('cycle_start_date')->get()->each->save();
+        $changed = BrandCycle::recalculateAll();
 
-        return back()->with('status', 'Recalculated tier, needs_check, and health_3c for all cycles.');
+        return back()->with('status', "Recalculated tier, needs_check, and health_3c for all cycles ({$changed} changed).");
     }
 
     private function validated(Request $request, bool $requireMetric = true): array
