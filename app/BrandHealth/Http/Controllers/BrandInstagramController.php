@@ -37,19 +37,19 @@ class BrandInstagramController extends Controller
         $account = BrandAccount::findOrFail($accountId);
 
         if ($request->query('error')) {
-            return redirect('/accounts')->with('ig_error', 'Instagram connection was cancelled or denied.');
+            return redirect()->route('brand-health.accounts.index')->with('ig_error', 'Instagram connection was cancelled or denied.');
         }
 
         $code = $request->query('code');
 
         if (! $code) {
-            return redirect('/accounts')->with('ig_error', 'Instagram did not return an authorization code.');
+            return redirect()->route('brand-health.accounts.index')->with('ig_error', 'Instagram did not return an authorization code.');
         }
 
         try {
             $result = $oauth->exchangeCodeForLongLivedToken($code);
         } catch (\Throwable $e) {
-            return redirect('/accounts')->with('ig_error', 'Instagram token exchange failed: '.$e->getMessage());
+            return redirect()->route('brand-health.accounts.index')->with('ig_error', 'Instagram token exchange failed: '.$e->getMessage());
         }
 
         $account->forceFill([
@@ -59,7 +59,7 @@ class BrandInstagramController extends Controller
             'ig_connected_at' => now(),
         ])->save();
 
-        return redirect('/accounts')->with('ig_success', "Instagram connected for {$account->name}.");
+        return redirect()->route('brand-health.accounts.index')->with('ig_success', "Instagram connected for {$account->name}.");
     }
 
     public function connect(Request $request, BrandAccount $account): RedirectResponse
