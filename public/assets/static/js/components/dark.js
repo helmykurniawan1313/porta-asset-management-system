@@ -15,12 +15,17 @@ function toggleDarkTheme() {
  * @param {boolean} persist 
  */
 function setTheme(theme, persist = false) {
+  // Swap, don't accumulate: after a toggle the body used to carry both "light" and "dark".
+  document.body.classList.remove(theme === "dark" ? "light" : "dark")
   document.body.classList.add(theme)
   document.documentElement.setAttribute('data-bs-theme', theme)
-  
+
   if (persist) {
     localStorage.setItem(THEME_KEY, theme)
   }
+
+  // Lets pages re-colour things drawn with theme colours (e.g. charts) without a reload.
+  document.dispatchEvent(new CustomEvent("porta:themechange", { detail: { theme } }))
 }
 
 /**

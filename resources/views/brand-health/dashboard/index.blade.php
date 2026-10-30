@@ -9,7 +9,7 @@
     .bh-tabs button.active { color: var(--bh-accent); border-bottom-color: var(--bh-accent); }
     .bh-seg { display: inline-flex; gap: .2rem; padding: .2rem; border: 1px solid var(--bh-border); border-radius: 10px; background: var(--bh-surface); }
     .bh-seg a { padding: .35rem .8rem; border-radius: 8px; font-size: .85rem; font-weight: 600; color: var(--bh-ink-muted); text-decoration: none; }
-    .bh-seg a.active { background: var(--bh-accent); color: #fff; }
+    .bh-seg a.active { background: var(--porta-accent-strong); color: #fff; }
     .bh-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 </style>
 @endsection

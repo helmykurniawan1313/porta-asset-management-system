@@ -6,7 +6,7 @@
 <style>
     .vt-tabs { display: inline-flex; gap: .25rem; border: 1px solid var(--bh-border); border-radius: 10px; padding: .25rem; background: var(--bh-surface); flex-wrap: wrap; }
     .vt-tabs > * { border: 0; background: transparent; border-radius: 7px; padding: .3rem .75rem; font-size: .85rem; font-weight: 500; color: var(--bh-ink-muted); text-decoration: none; }
-    .vt-tabs > .active { background: var(--bh-accent); color: #fff; }
+    .vt-tabs > .active { background: var(--porta-accent-strong); color: #fff; }
     .vt-kpi { display: block; text-decoration: none; border: 1px solid var(--bh-border); border-radius: 12px; padding: 1rem; background: var(--bh-surface); height: 100%; }
     .vt-kpi:hover { border-color: var(--bh-border-strong); }
     .vt-trend { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; padding: .2rem .6rem; font-size: .75rem; font-weight: 600; white-space: nowrap; }

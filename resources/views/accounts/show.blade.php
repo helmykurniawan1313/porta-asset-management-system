@@ -16,7 +16,7 @@
             border: 1px solid rgba(67, 94, 190, .08) !important;
             box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px rgba(67, 94, 190, .05) !important;
         }
-        .tile-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8a94a6; margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
+        .tile-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--porta-text-faint); margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
         .tile-hero { background: linear-gradient(145deg, rgba(67, 94, 190, .10), rgba(67, 94, 190, .02) 60%) !important; }
         .acc-icon { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-size: 1.8rem; color: #fff; flex-shrink: 0; }
         .acc-email { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; margin: 0; }

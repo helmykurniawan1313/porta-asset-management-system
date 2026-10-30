@@ -13,7 +13,7 @@
         }
         .stat-card { border-radius: 16px !important; }
         .stat-card .stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
-        .stat-card .stat-lbl { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a94a6; }
+        .stat-card .stat-lbl { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--porta-text-faint); }
         .status-tabs .btn { border-radius: 999px; font-weight: 700; font-size: .8rem; }
         tr.is-inactive td { opacity: .55; }
         .user-chip {

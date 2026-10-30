@@ -23,7 +23,7 @@
         }
         .detail-list .item { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px dashed rgba(67, 94, 190, .12); }
         .detail-list .item:last-child { border-bottom: 0; }
-        .detail-list .lbl { color: #8a94a6; font-size: .8rem; font-weight: 600; display: flex; align-items: center; gap: .45rem; white-space: nowrap; }
+        .detail-list .lbl { color: var(--porta-text-faint); font-size: .8rem; font-weight: 600; display: flex; align-items: center; gap: .45rem; white-space: nowrap; }
         .detail-list .val { font-weight: 700; text-align: right; overflow-wrap: anywhere; }
         [data-bs-theme="dark"] .detail-list .item { border-bottom-color: rgba(255, 255, 255, .06); }
         .pw-mask { letter-spacing: .15em; }

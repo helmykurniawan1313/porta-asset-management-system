@@ -6,12 +6,15 @@
     --porta-accent: #4f46e5;
     --porta-accent-hover: #4338ca;
     --porta-accent-soft: rgba(79, 70, 229, 0.1);
+    /* Filled indigo (buttons, active pills) under white text: deep in both themes. */
+    --porta-accent-strong: #4f46e5;
+    --porta-accent-strong-hover: #4338ca;
     --porta-surface: #ffffff;
     --porta-surface-muted: #f8f9fb;
     --porta-border: #e5e7eb;
     --porta-text: #1f2430;
     --porta-text-muted: #5b6474;
-    --porta-text-faint: #8a94a6;
+    --porta-text-faint: #747e90;
     --porta-radius: 16px;
     --porta-radius-sm: 10px;
     --porta-shadow: 0 1px 2px rgba(16, 24, 40, .04);
@@ -30,6 +33,8 @@
     --porta-accent: #818cf8;
     --porta-accent-hover: #a5b4fc;
     --porta-accent-soft: rgba(129, 140, 248, 0.16);
+    --porta-accent-strong: #4f46e5;
+    --porta-accent-strong-hover: #6366f1;
     --porta-surface: #171a23;
     --porta-surface-muted: #12141b;
     --porta-border: #2a2e3a;
@@ -187,20 +192,21 @@
 }
 
 .app-navbar-accent .avatar.bg-white {
-    background-color: var(--porta-accent) !important;
+    background-color: var(--porta-accent-strong) !important;
     color: #fff !important;
 }
 
 /* Buttons: primary actions use the single accent color */
 .btn-primary {
-    background-color: var(--porta-accent) !important;
-    border-color: var(--porta-accent) !important;
+    background-color: var(--porta-accent-strong) !important;
+    border-color: var(--porta-accent-strong) !important;
+    color: #fff !important;
 }
 
 .btn-primary:hover,
 .btn-primary:focus {
-    background-color: var(--porta-accent-hover) !important;
-    border-color: var(--porta-accent-hover) !important;
+    background-color: var(--porta-accent-strong-hover) !important;
+    border-color: var(--porta-accent-strong-hover) !important;
 }
 
 .btn-outline-primary {
@@ -209,8 +215,8 @@
 }
 
 .btn-outline-primary:hover {
-    background-color: var(--porta-accent) !important;
-    border-color: var(--porta-accent) !important;
+    background-color: var(--porta-accent-strong) !important;
+    border-color: var(--porta-accent-strong) !important;
     color: #fff !important;
 }
 
@@ -242,8 +248,9 @@
 .page-item.active .page-link,
 .form-check-input:checked,
 .bg-primary {
-    background-color: var(--porta-accent) !important;
-    border-color: var(--porta-accent) !important;
+    background-color: var(--porta-accent-strong) !important;
+    border-color: var(--porta-accent-strong) !important;
+    color: #fff;
 }
 
 .page-link {
@@ -528,3 +535,7 @@ body {
     min-height: 0;
     overflow: hidden;
 }
+
+/* Light mode: readable amber and cyan text (badges, warnings, stat numbers). Dark mode keeps the bright shades. */
+:root:not([data-bs-theme="dark"]) .text-warning { color: #b45309 !important; }
+:root:not([data-bs-theme="dark"]) .text-info { color: #0e7490 !important; }

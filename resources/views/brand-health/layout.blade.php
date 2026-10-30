@@ -156,12 +156,16 @@
 
             /** Theme-aware Chart.js defaults; returns the Chart instance. */
             chart(canvas, config) {
-                Chart.defaults.color = css('--bh-ink-muted');
-                Chart.defaults.borderColor = css('--bh-border');
+                BH.applyChartTheme();
                 Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
                 const existing = Chart.getChart(canvas);
                 if (existing) existing.destroy();
                 return new Chart(canvas, config);
+            },
+            /** Axis text and gridlines follow the current theme. */
+            applyChartTheme() {
+                Chart.defaults.color = css('--bh-ink-muted');
+                Chart.defaults.borderColor = css('--bh-border');
             },
             palette: ['#435ebe', '#16a34a', '#f59e0b', '#e11d48', '#0891b2', '#7c3aed', '#db2777', '#65a30d'],
 
@@ -177,6 +181,24 @@
             },
         };
     })();
+
+    // Theme toggled without a reload: recolour axis text/gridlines on every chart on the page.
+    // Charts keep the colours resolved at creation, so set the new ones on each chart directly.
+    document.addEventListener('porta:themechange', () => {
+        BH.applyChartTheme();
+        const ink = Chart.defaults.color, line = Chart.defaults.borderColor;
+        Object.values(Chart.instances).forEach((c) => {
+            c.options.color = ink;
+            c.options.borderColor = line;
+            Object.values(c.options.scales ?? {}).forEach((s) => {
+                if (s.grid) s.grid.color = line;
+                if (s.ticks) s.ticks.color = ink;
+                if (s.title) s.title.color = ink;
+            });
+            if (c.options.plugins?.legend?.labels) c.options.plugins.legend.labels.color = ink;
+            c.update('none');
+        });
+    });
 
     // Stacked modals (e.g. a drill-down over a detail modal): lift each newly opened
     // modal and its backdrop above the ones already open, and keep the body locked

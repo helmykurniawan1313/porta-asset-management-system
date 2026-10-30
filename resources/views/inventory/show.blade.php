@@ -43,7 +43,7 @@
             font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
-            color: #8a94a6;
+            color: var(--porta-text-faint);
             display: flex;
             align-items: center;
             gap: .4rem;
@@ -94,7 +94,7 @@
             background: var(--bs-card-bg, #fff);
         }
         .ring-value { font-size: 1.75rem; font-weight: 800; line-height: 1; }
-        .ring-caption { font-size: .68rem; color: #8a94a6; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+        .ring-caption { font-size: .68rem; color: var(--porta-text-faint); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
 
         /* ---------- Owner ---------- */
         .owner-avatar {
@@ -111,14 +111,14 @@
             border: 1px solid rgba(67, 94, 190, .06); min-width: 0;
         }
         .spec-cell i { font-size: 1.1rem; color: #435ebe; }
-        .spec-cell .spec-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8a94a6; margin: .45rem 0 .15rem; }
+        .spec-cell .spec-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--porta-text-faint); margin: .45rem 0 .15rem; }
         .spec-cell .spec-value { font-weight: 700; font-size: .92rem; overflow-wrap: anywhere; }
         .spec-cell.is-empty .spec-value { color: #b4bccb; font-weight: 600; }
 
         /* ---------- Stat tiles ---------- */
         .stat-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1.15rem; }
         .stat-value { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; margin-top: auto; overflow-wrap: anywhere; }
-        .stat-foot { font-size: .75rem; color: #8a94a6; font-weight: 600; }
+        .stat-foot { font-size: .75rem; color: var(--porta-text-faint); font-weight: 600; }
         .pw-mask { letter-spacing: .2em; }
 
         /* ---------- Lists ---------- */
@@ -139,7 +139,7 @@
         }
         .timeline-item:last-child { padding-bottom: 0; }
 
-        .empty-state { text-align: center; padding: 2rem 1rem; color: #8a94a6; font-size: .85rem; font-weight: 600; }
+        .empty-state { text-align: center; padding: 2rem 1rem; color: var(--porta-text-faint); font-size: .85rem; font-weight: 600; }
         .empty-state i { display: block; font-size: 2rem; color: rgba(67, 94, 190, .2); margin-bottom: .4rem; }
 
         .gallery-img { width: 100%; height: 180px; object-fit: cover; border-radius: 14px; cursor: zoom-in; transition: transform .3s ease; }

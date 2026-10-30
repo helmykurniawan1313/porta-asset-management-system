@@ -7,7 +7,7 @@
     .ci-row { cursor: pointer; }
     .ci-score { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .ci-trend { border: 1px solid var(--bh-border); border-radius: 999px; padding: .3rem .8rem; font-size: .8rem; font-weight: 600; background: transparent; color: var(--bh-ink-muted); margin: 0 .35rem .35rem 0; }
-    .ci-trend.active { background: var(--bh-accent); border-color: var(--bh-accent); color: #fff; }
+    .ci-trend.active { background: var(--porta-accent-strong); border-color: var(--porta-accent-strong); color: #fff; }
     .ci-tile { border: 1px solid var(--bh-border); border-radius: 12px; padding: .9rem; background: var(--bh-raised); height: 100%; }
     .ci-share { height: 4px; border-radius: 4px; background: var(--bh-accent-soft); overflow: hidden; }
     .ci-share > span { display: block; height: 100%; background: var(--bh-accent); }
