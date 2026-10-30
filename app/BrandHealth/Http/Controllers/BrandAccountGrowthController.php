@@ -5,6 +5,7 @@ namespace App\BrandHealth\Http\Controllers;
 use App\Http\Controllers\Controller;
 
 use App\BrandHealth\Http\Controllers\Concerns\ComputesAccountHealthAndDelta;
+use App\BrandHealth\Services\AccountProjectManagerHistory;
 use App\BrandHealth\Models\BrandAccount;
 use App\BrandHealth\Models\BrandCycle;
 use App\Models\User;
@@ -44,7 +45,7 @@ class BrandAccountGrowthController extends Controller
             ->orderBy('name')
             ->get();
 
-        $pmByAccount = $this->currentPmByAccount($accounts->pluck('id'));
+        $pmByAccount = (new AccountProjectManagerHistory())->currentByAccount($accounts->pluck('id'));
         $pmNames = User::whereIn('id', $pmByAccount->filter()->unique()->values())->get(['id', 'name'])->keyBy('id');
 
         // PM filter applied in PHP, after deriving each account's current PM
@@ -156,26 +157,6 @@ class BrandAccountGrowthController extends Controller
         }
 
         return false;
-    }
-
-    /**
-     * Each account's current PM, derived from its single most-recently-started
-     * cycle (same convention as AccountController::currentPmByAccount()).
-     *
-     * @return Collection<int, ?int> account_id => project_manager_id (or null)
-     */
-    private function currentPmByAccount(Collection $accountIds): Collection
-    {
-        if ($accountIds->isEmpty()) {
-            return collect();
-        }
-
-        return BrandCycle::whereIn('account_id', $accountIds)
-            ->orderByDesc('cycle_start_date')
-            ->orderByDesc('id')
-            ->get(['account_id', 'project_manager_id'])
-            ->unique('account_id')
-            ->pluck('project_manager_id', 'account_id');
     }
 
     private function presentAccount(BrandAccount $account, ?array $scores, ?int $pmId = null, ?Collection $pmNames = null): array

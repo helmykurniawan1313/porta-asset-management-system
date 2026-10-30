@@ -3,6 +3,7 @@
 namespace App\BrandHealth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\BrandHealth\Http\Controllers\Concerns\ComputesAccountHealthAndDelta;
 
 use App\BrandHealth\Models\BrandAccount;
 use App\BrandHealth\Models\BrandContentInsight;
@@ -28,6 +29,8 @@ use Illuminate\Contracts\View\View as Response;
 
 class BrandAccountController extends Controller
 {
+    use ComputesAccountHealthAndDelta;
+
     public function index(Request $request, MetricCalculator $calculator): Response
     {
         $search = $request->string('search')->trim()->toString() ?: null;
@@ -110,20 +113,6 @@ class BrandAccountController extends Controller
                 ->pluck('label'),
             'defaultAiProvider' => config('services.brand_health.ai_summary.provider', 'groq'),
         ]);
-    }
-
-    /**
-     * Percent change from one value to another — null when the base is 0/missing
-     * (no prior cycle, or a zero baseline), since "change from zero" has no
-     * meaningful percentage. Mirrors AccountGrowthModal.vue's percentChange().
-     */
-    private function percentChange(?float $from, ?float $to): ?float
-    {
-        if ($from === null || $to === null || $from == 0.0) {
-            return null;
-        }
-
-        return (($to - $from) / $from) * 100;
     }
 
     /**
@@ -334,7 +323,7 @@ class BrandAccountController extends Controller
             ->orderBy('name')
             ->get();
 
-        $pmByAccount = $this->currentPmByAccount($allAccounts->pluck('id'));
+        $pmByAccount = (new AccountProjectManagerHistory())->currentByAccount($allAccounts->pluck('id'));
         $pmNames = User::whereIn('id', $pmByAccount->filter()->unique()->values())->get(['id', 'name'])->keyBy('id');
 
         // PM filter can only be applied once each account's current PM is
@@ -457,7 +446,7 @@ class BrandAccountController extends Controller
     {
         $healthByAccount = $this->latestCycleHealthByAccount($accounts->pluck('id'), $calculator);
         $platformsByAccount = $this->platformsByAccount($accounts->pluck('id'));
-        $pmByAccount = $this->currentPmByAccount($accounts->pluck('id'));
+        $pmByAccount = (new AccountProjectManagerHistory())->currentByAccount($accounts->pluck('id'));
         $pmNames = User::whereIn('id', $pmByAccount->filter()->unique()->values())->get(['id', 'name'])->keyBy('id');
 
         $accounts->through(fn (BrandAccount $account) => $this->presentAccount(
@@ -495,83 +484,6 @@ class BrandAccountController extends Controller
     }
 
     /**
-     * Health/Growth/Reach/Views/Engagement status of each account's most
-     * recently-started cycle, keyed by account_id — the same "latest cycle"
-     * convention used by the Account Growth modal's headline stat. Growth Rate
-     * uses its own LabelBucket metric (METRIC_ACCOUNT_GROWTH), separate from
-     * the Cycles-page growth label, so its thresholds can be tuned
-     * independently in Settings. Accounts with no cycles simply have no entry
-     * (row shows "No data").
-     *
-     * Computed PER PLATFORM (grouped by account_id, then by platform) rather
-     * than across an account's cycles regardless of platform — an account
-     * with both Instagram and TikTok cycles interleaved by date previously had
-     * its "latest cycle" and "previous cycle" picked purely by date, which
-     * could silently compare one platform's cycle against the OTHER platform's
-     * cycle (e.g. TikTok's July reach vs Instagram's July reach), producing a
-     * meaningless delta. Each returned row now carries a `by_platform` map
-     * (one status set per platform actually tracked) plus top-level fields
-     * mirroring whichever platform is "primary" (Instagram preferred, since
-     * it's this app's primary tracked platform; falls back to whatever
-     * platform the account does have) — the top-level fields exist only for
-     * callers that need a single value (sort/filter/summary KPI), so nothing
-     * is silently dropped for multi-platform accounts.
-     */
-    private function latestCycleHealthByAccount(Collection $accountIds, MetricCalculator $calculator): Collection
-    {
-        if ($accountIds->isEmpty()) {
-            return collect();
-        }
-
-        $scoreBuckets = BrandScoreBucket::all();
-        $labelBuckets = BrandLabelBucket::all();
-        $formulaWeights = BrandFormulaWeight::all();
-        $accountGrowthBuckets = $labelBuckets->where('metric', BrandLabelBucket::METRIC_ACCOUNT_GROWTH);
-        $viewsChangeBuckets = $labelBuckets->where('metric', BrandLabelBucket::METRIC_VIEWS_CHANGE);
-        $reachChangeBuckets = $labelBuckets->where('metric', BrandLabelBucket::METRIC_REACH_CHANGE);
-        $engagementChangeBuckets = $labelBuckets->where('metric', BrandLabelBucket::METRIC_ENGAGEMENT_CHANGE);
-        $resolver = new ScoreBucketResolver();
-
-        return BrandCycle::whereIn('account_id', $accountIds)
-            ->orderBy('cycle_start_date')
-            ->get()
-            ->groupBy('account_id')
-            ->map(function (Collection $accountCycles) use ($calculator, $scoreBuckets, $labelBuckets, $formulaWeights, $accountGrowthBuckets, $viewsChangeBuckets, $reachChangeBuckets, $engagementChangeBuckets, $resolver) {
-                $byPlatform = $accountCycles
-                    ->groupBy(fn (BrandCycle $cycle) => $cycle->platform ?? 'instagram')
-                    ->map(function (Collection $cycles) use ($calculator, $scoreBuckets, $labelBuckets, $formulaWeights, $accountGrowthBuckets, $viewsChangeBuckets, $reachChangeBuckets, $engagementChangeBuckets, $resolver) {
-                        $latest = $cycles->last();
-                        $previous = $cycles->count() > 1 ? $cycles->slice(-2, 1)->first() : null;
-                        $scores = $calculator->calculate($latest, $scoreBuckets, $labelBuckets, $formulaWeights);
-
-                        // Views/Reach/Engagement status here mirror the Growth Analysis
-                        // panel's "latest cycle vs the one before it" comparison — not an
-                        // absolute rate — same buckets already used there and in the
-                        // Excel export. Both cycles are now guaranteed the same platform.
-                        $viewsChangeRate = $this->percentChange($previous?->views, $latest->views);
-                        $reachChangeRate = $this->percentChange($previous?->reach, $latest->reach);
-                        $engagementChangeRate = $this->percentChange($previous?->engagement, $latest->engagement);
-
-                        return [
-                            'health_label' => $scores['health_label'],
-                            'growth_rate' => $scores['growth_rate'],
-                            'growth_label' => $resolver->resolve($accountGrowthBuckets, $scores['growth_rate'], 'min_score', 'label'),
-                            'views_change_rate' => $viewsChangeRate,
-                            'views_status' => $viewsChangeRate !== null ? $resolver->resolve($viewsChangeBuckets, $viewsChangeRate, 'min_score', 'label') : null,
-                            'reach_change_rate' => $reachChangeRate,
-                            'reach_status' => $reachChangeRate !== null ? $resolver->resolve($reachChangeBuckets, $reachChangeRate, 'min_score', 'label') : null,
-                            'engagement_change_rate' => $engagementChangeRate,
-                            'engagement_status' => $engagementChangeRate !== null ? $resolver->resolve($engagementChangeBuckets, $engagementChangeRate, 'min_score', 'label') : null,
-                        ];
-                    });
-
-                $primary = $byPlatform->get('instagram') ?? $byPlatform->first();
-
-                return array_merge($primary, ['by_platform' => $byPlatform->all()]);
-            });
-    }
-
-    /**
      * Which platforms (instagram/tiktok) each account has at least one cycle
      * on, keyed by account_id — drives the platform icons on the accounts list.
      */
@@ -585,31 +497,6 @@ class BrandAccountController extends Controller
             ->get(['account_id', 'platform'])
             ->groupBy('account_id')
             ->map(fn (Collection $cycles) => $cycles->pluck('platform')->unique()->values()->all());
-    }
-
-    /**
-     * Each account's current PM, derived from its single most-recently-started
-     * cycle regardless of platform (deliberately NOT split per-platform like
-     * latestCycleHealthByAccount() above — an account's "current PM" is one
-     * person, not one-per-platform, per how this was scoped). Account no
-     * longer has its own project_manager_id column in active use; this is
-     * the one place "this account's PM" gets computed, so sort/filter/display
-     * all agree with each other and with the Account detail page.
-     *
-     * @return Collection<int, ?int> account_id => project_manager_id (or null)
-     */
-    private function currentPmByAccount(Collection $accountIds): Collection
-    {
-        if ($accountIds->isEmpty()) {
-            return collect();
-        }
-
-        return BrandCycle::whereIn('account_id', $accountIds)
-            ->orderByDesc('cycle_start_date')
-            ->orderByDesc('id')
-            ->get(['account_id', 'project_manager_id'])
-            ->unique('account_id')
-            ->pluck('project_manager_id', 'account_id');
     }
 
     public function growth(BrandAccount $account, MetricCalculator $calculator): JsonResponse
@@ -872,7 +759,7 @@ class BrandAccountController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // No project_manager_id here — an account's PM is derived from its
-        // cycles (see currentPmByAccount()), and a brand-new account has none
+        // cycles (see AccountProjectManagerHistory::currentByAccount()), and a brand-new account has none
         // yet. It'll show "No PM yet" until its first cycle is created.
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],

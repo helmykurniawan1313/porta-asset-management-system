@@ -24,7 +24,29 @@ class AccountProjectManagerHistory
     {
         return $account->cycles()
             ->orderByDesc('cycle_start_date')
+            ->orderByDesc('id')
             ->value('project_manager_id');
+    }
+
+    /**
+     * current() for many accounts in one query. Ties on cycle_start_date
+     * (same-day Instagram + TikTok cycles) break on the higher id, as in
+     * accountIdsCurrentlyManagedBy(). Accounts with no cycles are absent.
+     *
+     * @return Collection<int, ?int> account_id => project_manager_id
+     */
+    public function currentByAccount(Collection $accountIds): Collection
+    {
+        if ($accountIds->isEmpty()) {
+            return collect();
+        }
+
+        return BrandCycle::whereIn('account_id', $accountIds)
+            ->orderByDesc('cycle_start_date')
+            ->orderByDesc('id')
+            ->get(['account_id', 'project_manager_id'])
+            ->unique('account_id')
+            ->pluck('project_manager_id', 'account_id');
     }
 
     /**
