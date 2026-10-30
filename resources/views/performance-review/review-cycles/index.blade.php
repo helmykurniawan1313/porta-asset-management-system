@@ -18,7 +18,7 @@
             </div>
             <div class="mt-3 mt-md-0">
                 <button data-bs-toggle="modal" data-bs-target="#add-cycle-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                    <i class="bi bi-plus-circle me-1"></i> NEW CYCLE
+                    <i class="bi bi-plus-circle me-1"></i> New Cycle
                 </button>
             </div>
         </div>
@@ -82,7 +82,7 @@
 
 @section('modals')
     <div class="modal fade" id="add-cycle-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">New Review Cycle</h5>
@@ -92,19 +92,19 @@
                     @csrf
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Name</label>
+                            <label class="form-label">Name</label>
                             <input type="text" name="name" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Starts At</label>
+                            <label class="form-label">Starts At</label>
                             <input type="datetime-local" name="starts_at" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Ends At</label>
+                            <label class="form-label">Ends At</label>
                             <input type="datetime-local" name="ends_at" class="form-control" required>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label fw-bold small text-uppercase">Status</label>
+                            <label class="form-label">Status</label>
                             <select name="status" class="form-select">
                                 <option value="draft">Draft</option>
                                 <option value="open">Open</option>
@@ -114,7 +114,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save</button>
                     </div>
                 </form>
             </div>
@@ -123,7 +123,7 @@
 
     @foreach($reviewCycles as $cycle)
     <div class="modal fade" id="edit-cycle-{{ $cycle->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Edit Review Cycle</h5>
@@ -133,19 +133,19 @@
                     @csrf @method('PATCH')
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Name</label>
+                            <label class="form-label">Name</label>
                             <input type="text" name="name" value="{{ $cycle->name }}" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Starts At</label>
+                            <label class="form-label">Starts At</label>
                             <input type="datetime-local" name="starts_at" value="{{ $cycle->starts_at->format('Y-m-d\TH:i') }}" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Ends At</label>
+                            <label class="form-label">Ends At</label>
                             <input type="datetime-local" name="ends_at" value="{{ $cycle->ends_at->format('Y-m-d\TH:i') }}" class="form-control" required>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label fw-bold small text-uppercase">Status</label>
+                            <label class="form-label">Status</label>
                             <select name="status" class="form-select">
                                 @foreach(['draft', 'open', 'closed'] as $status)
                                     <option value="{{ $status }}" {{ $cycle->status === $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
@@ -155,7 +155,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Update</button>
                     </div>
                 </form>
             </div>

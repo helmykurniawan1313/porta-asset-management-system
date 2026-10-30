@@ -6,22 +6,6 @@
 @section('styles')
     <link rel="stylesheet" href="{{ asset('assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" crossorigin href="{{ asset('assets/compiled/css/table-datatable-jquery.css') }}">
-    <style>
-        /* Modern Floating Header - NO GRAY */
-       
-
-        /* Dark Mode Adjustment */
-        .theme-dark #table1 thead th {
-            color: #8c9eff !important; 
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        /* Soften the row transitions */
-        .table-hover tbody tr:hover {
-            background-color: rgba(67, 94, 190, 0.03) !important;
-            transition: background-color 0.2s ease;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -41,7 +25,7 @@
             </div>
             <div class="mt-3 mt-md-0">
                 <button data-bs-toggle="modal" data-bs-target="#add-account-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                    <i class="bi bi-plus-lg me-1"></i> ADD ACCOUNT
+                    <i class="bi bi-plus-lg me-1"></i> Add Account
                 </button>
             </div>
         </div>
@@ -93,7 +77,7 @@
 
 @section('modals')
 <div class="modal fade" id="add-account-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Register Master Account</h5>
@@ -103,17 +87,17 @@
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-4">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
+                        <label class="form-label">Email Address</label>
                         <input type="email" name="email" placeholder="e.g. marketing@porta.com" class="form-control form-control-lg fs-6" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Department / Purpose</label>
+                        <label class="form-label">Department / Purpose</label>
                         <input type="text" name="purpose" placeholder="e.g. Design Team Shared Logins" class="form-control form-control-lg fs-6">
                     </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SAVE ACCOUNT</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Save Account</button>
                 </div>
             </form>
         </div>
@@ -122,7 +106,7 @@
 
 @foreach($accounts as $acc)
 <div class="modal fade" id="edit-account-modal-{{ $acc->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Edit Account Info</h5>
@@ -132,17 +116,17 @@
                 @csrf @method('PUT')
                 <div class="modal-body p-4">
                     <div class="mb-4">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Account Email</label>
+                        <label class="form-label">Account Email</label>
                         <input type="email" name="email" value="{{ $acc->email }}" class="form-control form-control-lg fs-6" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Primary Purpose</label>
+                        <label class="form-label">Primary Purpose</label>
                         <input type="text" name="purpose" value="{{ $acc->purpose }}" class="form-control form-control-lg fs-6">
                     </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SAVE CHANGES</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -161,10 +145,7 @@
             // Initialize jQuery DataTables
             $('#table1').DataTable({
                 "pageLength": 10,
-                "language": {
-                    "search": "Filter accounts:",
-                    "lengthMenu": "Show _MENU_ entries"
-                }
+                "language": window.PORTA_DT_LANGUAGE
             });
         });
     </script>

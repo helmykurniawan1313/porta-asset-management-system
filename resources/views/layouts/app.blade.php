@@ -44,6 +44,15 @@
         [data-bs-theme="dark"] .choices__list--multiple .choices__item { background: #6366f1; border-color: #6366f1; }
     </style>
 
+    <script>
+        // One wording for every DataTables table (pages pass this as their "language").
+        window.PORTA_DT_LANGUAGE = {
+            search: '', searchPlaceholder: 'Search…', lengthMenu: '_MENU_ per page',
+            info: 'Showing _START_–_END_ of _TOTAL_', infoEmpty: 'No records', infoFiltered: '(filtered from _MAX_)',
+            zeroRecords: 'No matching records', emptyTable: 'Nothing here yet',
+            paginate: { previous: '‹', next: '›' },
+        };
+    </script>
     @yield('styles')
 </head>
 <body>
@@ -103,24 +112,13 @@
             flex-shrink: 0;
             padding: 0.5rem 0;
         }
-        .hr-modal {
-            border-radius: 1rem;
-            background-color: var(--porta-surface);
-            color: var(--porta-text);
-        }
-        .hr-modal .modal-header {
-            padding: 1.5rem 1.5rem 0;
-        }
-        .hr-modal .modal-footer {
-            border-top: 1px solid var(--porta-border);
-            background-color: var(--porta-surface-muted);
-        }
+        /* Modal styling is global (porta-theme.css). */
     </style>
 
     @yield('modals')
 
     <div class="modal fade" id="app-confirm-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold d-flex align-items-center gap-2">

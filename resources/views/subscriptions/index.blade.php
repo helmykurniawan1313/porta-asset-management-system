@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ asset('assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" crossorigin href="{{ asset('assets/compiled/css/table-datatable-jquery.css') }}">
     <style>
-        .table-hover tbody tr:hover { background-color: rgba(67, 94, 190, 0.03) !important; }
         .app-avatar {
             width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
             font-weight: 800; font-size: .95rem; color: #fff;
@@ -31,12 +30,6 @@
         [data-bs-theme="dark"] .user-chip { background: rgba(129, 140, 248, .14); color: #e5e7eb; }
         [data-bs-theme="dark"] .user-dot { background: #6366f1; }
 
-        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
-        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
-        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
-        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
-        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
-        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
 @endsection
 
@@ -280,7 +273,7 @@
                 pageLength: 25,
                 order: [[4, 'asc']], // soonest renewal first
                 columnDefs: [{ targets: [5], visible: false }],
-                language: { search: 'Search:' }
+                language: window.PORTA_DT_LANGUAGE
             });
 
             // Status tabs filter the hidden Status column (exact match).

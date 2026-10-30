@@ -20,7 +20,7 @@
     </div>
 
     <div class="modal fade" id="confirmUserDeletionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow hr-modal">
                 <form method="post" action="{{ route('profile.destroy') }}">
                     @csrf
@@ -37,7 +37,7 @@
                         </p>
 
                         <div class="mb-0">
-                            <label for="password" class="form-label fw-bold text-muted small text-uppercase">{{ __('Password') }}</label>
+                            <label for="password" class="form-label">{{ __('Password') }}</label>
                             <input id="password" name="password" type="password" 
                                    class="form-control @error('password', 'userDeletion') is-invalid @enderror" 
                                    placeholder="{{ __('Enter password to confirm') }}">

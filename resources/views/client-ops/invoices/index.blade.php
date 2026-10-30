@@ -101,7 +101,7 @@
         @php $invoice = $cycle->invoices->first(); @endphp
         @if(! $invoice)
             <div class="modal fade" id="invoice-modal-{{ $cycle->id }}" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                     <form method="POST" action="{{ route('invoices.store', $cycle) }}" class="modal-content hr-modal">
                         @csrf
                         <div class="modal-header border-0">
@@ -144,7 +144,7 @@
             </div>
         @else
             <div class="modal fade" id="update-invoice-{{ $invoice->id }}" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                     <form method="POST" action="{{ route('invoices.update', $invoice) }}" class="modal-content hr-modal">
                         @csrf @method('PUT')
                         <div class="modal-header border-0">

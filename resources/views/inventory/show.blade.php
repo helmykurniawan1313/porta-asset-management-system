@@ -171,15 +171,6 @@
         .bento .empty-state .bi { display: flex; margin: 0 auto .4rem; }
         .tile .pagination { margin-bottom: 0; }
 
-        /* ---------- Dark mode (the template sets data-bs-theme="dark" on <html>) ----------
-           Its pale "light-*" badges and buttons stay pastel in dark mode, which makes the
-           coloured text on them unreadable, so swap them for translucent tints. */
-        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; border-color: transparent !important; }
-        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; border-color: transparent !important; }
-        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; border-color: transparent !important; }
-        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; border-color: transparent !important; }
-        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; border-color: transparent !important; }
-        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; border-color: transparent !important; }
         [data-bs-theme="dark"] [class*="btn-light-"]:hover { filter: brightness(1.25); }
         [data-bs-theme="dark"] .btn-warning { color: #1f1300 !important; }
 
@@ -916,7 +907,7 @@
 @section('modals')
 
     <div class="modal fade" id="issue-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <form action="{{ route('inventory.issues.store', $device) }}" method="POST" class="modal-content border-0 shadow-sm hr-modal">
                 @csrf
                 <div class="modal-header border-0 pb-0">
@@ -953,7 +944,7 @@
     </div>
 
     <div class="modal fade" id="detach-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <form method="POST" id="detach-form" class="modal-content border-0 shadow-sm hr-modal">
                 @csrf
                 <div class="modal-header border-0 pb-0">
@@ -983,7 +974,7 @@
     </div>
 
     <div class="modal fade" id="image-lightbox-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl">
             <div class="modal-content bg-transparent border-0 shadow-none">
                 <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1329,7 +1320,7 @@
     </div>
 
     <div class="modal fade" id="service-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-sm hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Log Maintenance/Service</h5>
@@ -1366,7 +1357,7 @@
     </div>
 
     <div class="modal fade" id="health-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-sm hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Log Health Diagnostic</h5>

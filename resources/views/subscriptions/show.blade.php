@@ -28,12 +28,6 @@
         [data-bs-theme="dark"] .detail-list .item { border-bottom-color: rgba(255, 255, 255, .06); }
         .pw-mask { letter-spacing: .15em; }
 
-        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
-        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
-        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
-        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
-        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
-        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
 @endsection
 
@@ -122,7 +116,7 @@
                     <p class="text-muted small mb-0">Found <span class="text-primary fw-bold">{{ $subscription->allocations->count() }}</span> active assignments.</p>
                 </div>
                 <button data-bs-toggle="modal" data-bs-target="#assign-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm mt-3 mt-sm-0">
-                    <i class="bi bi-shield-check me-1"></i> GRANT ACCESS
+                    <i class="bi bi-shield-check me-1"></i> Grant Access
                 </button>
             </div>
             
@@ -175,7 +169,7 @@
 
 @section('modals')
 <div class="modal fade" id="assign-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem;">Assign Software License</h5>
@@ -185,7 +179,7 @@
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-2">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Target Assignment</label>
+                        <label class="form-label">Target Assignment</label>
                         <select name="assignable_target" class="form-select" required>
                             <option value="">-- Choose User or Device --</option>
                             <optgroup label="Staff Members">
@@ -206,7 +200,7 @@
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">GRANT ACCESS</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Grant Access</button>
                 </div>
             </form>
         </div>

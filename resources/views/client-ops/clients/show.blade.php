@@ -96,7 +96,7 @@
                 @if($canManage)
                     <div class="mt-3 mt-md-0">
                         <button data-bs-toggle="modal" data-bs-target="#add-contract-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                            <i class="bi bi-file-earmark-plus me-1"></i> ADD CONTRACT
+                            <i class="bi bi-file-earmark-plus me-1"></i> Add Contract
                         </button>
                     </div>
                 @endif
@@ -207,7 +207,7 @@
                         @foreach($contract->cycles as $cycle)
                             {{-- Update cycle modal --}}
                             <div class="modal fade" id="cycle-modal-{{ $cycle->id }}" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                     <form method="POST" action="{{ route('contract-cycles.update', $cycle) }}" class="modal-content hr-modal">
                                         @csrf @method('PUT')
                                         <div class="modal-header border-0">
@@ -249,7 +249,7 @@
 
                         {{-- Edit contract modal --}}
                         <div class="modal fade" id="edit-contract-modal-{{ $contract->id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                 <form method="POST" action="{{ route('contracts.update', $contract) }}" class="modal-content hr-modal">
                                     @csrf @method('PUT')
                                     <div class="modal-header border-0">
@@ -290,7 +290,7 @@
     @if($canManage)
     {{-- Reassign modal --}}
     <div class="modal fade" id="reassign-modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <form method="POST" action="{{ route('clients.reassign', $client) }}" class="modal-content hr-modal">
                 @csrf
                 <div class="modal-header border-0">
@@ -318,7 +318,7 @@
 
     {{-- Add contract modal --}}
     <div class="modal fade" id="add-contract-modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <form method="POST" action="{{ route('contracts.store', $client) }}" class="modal-content hr-modal">
                 @csrf
                 <div class="modal-header border-0">

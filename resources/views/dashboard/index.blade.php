@@ -17,9 +17,9 @@
 
                     <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
                         @if($user->resigned_at)
-                            <span class="badge bg-light-danger text-danger px-3 rounded-pill fw-bold">RESIGNED</span>
+                            <span class="badge bg-light-danger text-danger px-3 rounded-pill fw-bold">Resigned</span>
                         @else
-                            <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">ACTIVE</span>
+                            <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">Active</span>
                         @endif
                         @if($user->department)
                             <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold">{{ $user->department->name }}</span>

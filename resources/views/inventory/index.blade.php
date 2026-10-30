@@ -11,16 +11,7 @@
         .hover-opacity-100 { opacity: 0; transition: all 0.3s ease-in-out; }
         .hover-parent:hover .hover-opacity-100 { opacity: 1; background-color: rgba(0,0,0,0.6) !important; }
         
-        /* Subtle row highlight */
-        .table-hover tbody tr:hover { background-color: rgba(67, 94, 190, 0.04) !important; }
 
-        /* Dark mode: the template's pale "light-*" badges/buttons stay pastel; use translucent tints. */
-        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
-        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
-        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
-        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
-        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
-        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
  
 @endsection
@@ -77,13 +68,13 @@
                 </div>
                 
                 <div class="d-flex gap-2">
-                    <a href="{{ route('inventory.export', $category) }}" class="btn btn-light-success btn-sm px-4 fw-bold shadow-sm">
-                        <i class="bi bi-file-earmark-excel me-1"></i> EXPORT EXCEL
+                    <a href="{{ route('inventory.export', $category) }}" class="btn btn-light-secondary btn-sm px-3">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
                     </a>
 
                     @if($category !== 'Dashboard')
                     <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                        <i class="bi bi-plus-lg me-1"></i> NEW {{ strtoupper($category) }}
+                        <i class="bi bi-plus-lg me-1"></i> New {{ $category }}
                     </button>
                     @endif
                 </div>
@@ -774,10 +765,7 @@
 
             $('#table1').DataTable({
                 "pageLength": 10,
-                "language": {
-                    "search": "Filter records:",
-                    "lengthMenu": "Display _MENU_ entries per page"
-                }
+                "language": window.PORTA_DT_LANGUAGE
             });
         });
 

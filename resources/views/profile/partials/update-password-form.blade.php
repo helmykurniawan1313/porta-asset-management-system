@@ -14,7 +14,7 @@
             @method('put')
 
             <div class="mb-3">
-                <label for="update_password_current_password" class="form-label fw-bold text-muted small text-uppercase">
+                <label for="update_password_current_password" class="form-label">
                     {{ __('Current Password') }}
                 </label>
                 <input id="update_password_current_password" name="current_password" type="password" 
@@ -25,7 +25,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="update_password_password" class="form-label fw-bold text-muted small text-uppercase">
+                <label for="update_password_password" class="form-label">
                     {{ __('New Password') }}
                 </label>
                 <input id="update_password_password" name="password" type="password" 
@@ -36,7 +36,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="update_password_password_confirmation" class="form-label fw-bold text-muted small text-uppercase">
+                <label for="update_password_password_confirmation" class="form-label">
                     {{ __('Confirm Password') }}
                 </label>
                 <input id="update_password_password_confirmation" name="password_confirmation" type="password" 

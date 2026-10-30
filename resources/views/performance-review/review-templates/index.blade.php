@@ -18,7 +18,7 @@
         <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <h5 class="card-title mb-1">Templates</h5>
             <button data-bs-toggle="modal" data-bs-target="#add-template-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                <i class="bi bi-plus-circle me-1"></i> NEW TEMPLATE
+                <i class="bi bi-plus-circle me-1"></i> New Template
             </button>
         </div>
         <div class="card-body py-4">
@@ -99,7 +99,7 @@
 
 @section('modals')
     <div class="modal fade" id="add-template-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">New Template</h5>
@@ -108,12 +108,12 @@
                 <form action="{{ route('hr.review-cycles.templates.store', $reviewCycle) }}" method="POST">
                     @csrf
                     <div class="modal-body p-4">
-                        <label class="form-label fw-bold small text-uppercase">Template Name</label>
+                        <label class="form-label">Template Name</label>
                         <input type="text" name="name" class="form-control" required>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save</button>
                     </div>
                 </form>
             </div>
@@ -122,7 +122,7 @@
 
     @foreach($reviewTemplates as $template)
     <div class="modal fade" id="edit-template-{{ $template->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Edit Template</h5>
@@ -131,12 +131,12 @@
                 <form action="{{ route('hr.review-cycles.templates.update', [$reviewCycle, $template]) }}" method="POST">
                     @csrf @method('PATCH')
                     <div class="modal-body p-4">
-                        <label class="form-label fw-bold small text-uppercase">Template Name</label>
+                        <label class="form-label">Template Name</label>
                         <input type="text" name="name" value="{{ $template->name }}" class="form-control" required>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Update</button>
                     </div>
                 </form>
             </div>
@@ -144,7 +144,7 @@
     </div>
 
     <div class="modal fade" id="add-question-{{ $template->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Add Question</h5>
@@ -154,11 +154,11 @@
                     @csrf
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Question Text</label>
+                            <label class="form-label">Question Text</label>
                             <textarea name="text" class="form-control" rows="2" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Type</label>
+                            <label class="form-label">Type</label>
                             <select name="type" class="form-select">
                                 <option value="rating_scale">Rating Scale</option>
                                 <option value="text">Text</option>
@@ -166,13 +166,13 @@
                             </select>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label fw-bold small text-uppercase">Order</label>
+                            <label class="form-label">Order</label>
                             <input type="number" name="order" class="form-control" value="0">
                         </div>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save</button>
                     </div>
                 </form>
             </div>
@@ -181,7 +181,7 @@
 
     @foreach($template->questions as $question)
     <div class="modal fade" id="edit-question-{{ $question->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Edit Question</h5>
@@ -191,11 +191,11 @@
                     @csrf @method('PATCH')
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Question Text</label>
+                            <label class="form-label">Question Text</label>
                             <textarea name="text" class="form-control" rows="2" required>{{ $question->text }}</textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-uppercase">Type</label>
+                            <label class="form-label">Type</label>
                             <select name="type" class="form-select">
                                 @foreach(['rating_scale' => 'Rating Scale', 'text' => 'Text', 'multiple_choice' => 'Multiple Choice'] as $val => $label)
                                     <option value="{{ $val }}" {{ $question->type === $val ? 'selected' : '' }}>{{ $label }}</option>
@@ -203,13 +203,13 @@
                             </select>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label fw-bold small text-uppercase">Order</label>
+                            <label class="form-label">Order</label>
                             <input type="number" name="order" class="form-control" value="{{ $question->order }}">
                         </div>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Update</button>
                     </div>
                 </form>
             </div>

@@ -11,7 +11,7 @@ class DepartmentController extends Controller
     public function index()
     {
         $departments = Department::withCount('users')
-            ->with(['headOfDepartment:id,name', 'parent:id,name', 'children:id,name,parent_id'])
+            ->with(['headOfDepartment:id,name', 'parent:id,name', 'children' => fn ($query) => $query->select('id', 'name', 'parent_id')->withCount('users')])
             ->latest()
             ->get();
         $users = User::orderBy('name')->get(['id', 'name', 'department_id']);

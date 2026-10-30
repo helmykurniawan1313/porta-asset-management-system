@@ -40,7 +40,6 @@
         .account-icon .bi::before { vertical-align: 0; line-height: 1; }
         [data-bs-theme="dark"] .account-card { border-color: rgba(255, 255, 255, .08); }
         [data-bs-theme="dark"] .account-icon { background: rgba(129, 140, 248, .12); color: #a5b4fc; }
-        [data-bs-theme="dark"] .bg-light-primary { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
         [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
 @endsection
@@ -65,15 +64,15 @@
                     <p class="text-muted fw-semibold mb-3">{{ $employee->email ?? 'No email provided' }}</p>
                     <div class="d-flex gap-2 flex-wrap">
                         @if($employee->resigned_at)
-                            <span class="badge bg-light-danger text-danger px-3 rounded-pill fw-bold">RESIGNED {{ $employee->resigned_at->format('d/m/Y') }}</span>
+                            <span class="badge bg-light-danger text-danger px-3 rounded-pill fw-bold">Resigned {{ $employee->resigned_at->format('d/m/Y') }}</span>
                         @else
-                            <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">ACTIVE</span>
+                            <span class="badge bg-light-success text-success px-3 rounded-pill fw-bold">Active</span>
                         @endif
                         <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold">
                             {{ $employee->department->name ?? 'NO DEPARTMENT' }}
                         </span>
                         @if($employee->joined_at)
-                            <span class="badge bg-light-secondary text-secondary px-3 rounded-pill fw-bold">JOINED {{ $employee->joined_at->format('d/m/Y') }}</span>
+                            <span class="badge bg-light-secondary text-secondary px-3 rounded-pill fw-bold">Joined {{ $employee->joined_at->format('d/m/Y') }}</span>
                         @endif
                     </div>
                 </div>
@@ -203,7 +202,7 @@
                 <p class="text-muted small mb-0">Subscription seats assigned to this user.</p>
             </div>
             <button type="button" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#link-software-modal">
-                <i class="bi bi-link-45deg me-1"></i> LINK SOFTWARE
+                <i class="bi bi-link-45deg me-1"></i> Link Software
             </button>
         </div>
         <div class="card-body py-4">
@@ -257,7 +256,7 @@
 @endsection
 @section('modals')
 <div class="modal fade" id="link-software-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
         <form method="POST" id="link-software-form" class="modal-content border-0 shadow-sm hr-modal">
             @csrf
             <input type="hidden" name="assignable_target" value="App\Models\User,{{ $employee->id }}">

@@ -24,10 +24,10 @@
             <h5 class="card-title mb-1">Assignments</h5>
             <div class="d-flex gap-2 flex-wrap">
                 <button data-bs-toggle="modal" data-bs-target="#bulk-org-chart-modal" class="btn btn-outline-primary btn-sm px-3 fw-bold">
-                    <i class="bi bi-diagram-3 me-1"></i> BULK FROM ORG CHART
+                    <i class="bi bi-diagram-3 me-1"></i> Bulk from Org Chart
                 </button>
                 <button data-bs-toggle="modal" data-bs-target="#add-assignment-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                    <i class="bi bi-plus-circle me-1"></i> NEW ASSIGNMENT
+                    <i class="bi bi-plus-circle me-1"></i> New Assignment
                 </button>
             </div>
         </div>
@@ -80,7 +80,7 @@
 
 @section('modals')
     <div class="modal fade" id="add-assignment-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg assignment-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">New Assignment(s)</h5>
@@ -90,7 +90,7 @@
                     @csrf
                     <div class="modal-body p-4">
                         <div class="mb-4">
-                            <label class="form-label fw-bold small text-uppercase text-muted">Review Type</label>
+                            <label class="form-label">Review Type</label>
                             <select name="review_type" id="review_type" class="form-select" onchange="toggleReviewerField()">
                                 <option value="self">Self</option>
                                 <option value="peer">Peer</option>
@@ -100,7 +100,7 @@
                             <small class="text-muted">For "self", the reviewee reviews themselves — no separate reviewer needed.</small>
                         </div>
                         <div class="mb-4" id="reviewer-field">
-                            <label class="form-label fw-bold small text-uppercase text-muted">Reviewer</label>
+                            <label class="form-label">Reviewer</label>
                             <div class="reviewer-select position-relative">
                                 <input type="hidden" name="reviewer_id" id="reviewer_id">
                                 <input type="text" id="reviewer-search" class="form-control" placeholder="-- Select Reviewer --" autocomplete="off">
@@ -109,7 +109,7 @@
                         </div>
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label fw-bold small text-uppercase text-muted mb-0">Reviewee(s)</label>
+                                <label class="form-label mb-0">Reviewee(s)</label>
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" id="reviewee-select-all">
                                     <label class="form-check-label small fw-bold" for="reviewee-select-all">Select all</label>
@@ -157,7 +157,7 @@
     </div>
 
     <div class="modal fade" id="bulk-org-chart-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg assignment-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Bulk Create from Org Chart</h5>
@@ -167,7 +167,7 @@
                     @csrf
                     <div class="modal-body p-4">
                         <p class="text-muted small">Upward: every staff member reviews their department's Head. Downward: every Head reviews their own staff.</p>
-                        <label class="form-label fw-bold small text-uppercase text-muted">Review Type</label>
+                        <label class="form-label">Review Type</label>
                         <select name="review_type" class="form-select">
                             <option value="upward">Upward</option>
                             <option value="downward">Downward</option>
@@ -269,10 +269,8 @@
         $(document).ready(function() {
             $('#table1').DataTable({
                 "pageLength": 15,
-                "language": {
-                    "search": "Filter assignments:",
-                    "lengthMenu": "Display _MENU_ entries"
-                }
+                "lengthMenu": [15, 25, 50, 100],
+                "language": window.PORTA_DT_LANGUAGE
             });
         });
     </script>

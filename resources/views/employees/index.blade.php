@@ -28,7 +28,7 @@
 
                 <div class="mt-3 mt-md-0">
                     <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                        <i class="bi bi-person-plus me-1"></i> ADD EMPLOYEE
+                        <i class="bi bi-person-plus me-1"></i> Add Employee
                     </button>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                                 <td class="text-muted py-3">{{ $emp->email ?? '-' }}</td>
                                 <td class="py-3">
                                     <span class="badge {{ $emp->department ? 'bg-light-primary text-primary' : 'bg-light-secondary text-secondary' }} px-3 rounded-pill" style="font-size: 0.65rem;">
-                                        {{ $emp->department->name ?? 'UNASSIGNED' }}
+                                        {{ $emp->department->name ?? 'Unassigned' }}
                                     </span>
                                 </td>
                                 <td class="text-muted py-3">
@@ -68,15 +68,15 @@
                                 @hasrole('Super Admin')
                                 <td class="py-3">
                                     <span class="badge bg-light-secondary text-secondary px-3 rounded-pill" style="font-size: 0.65rem;">
-                                        {{ $emp->getRoleNames()->join(', ') ?: 'NO ROLE' }}
+                                        {{ $emp->getRoleNames()->join(', ') ?: 'No Role' }}
                                     </span>
                                 </td>
                                 @endhasrole
                                 <td class="py-3">
                                     @if($emp->resigned_at)
-                                        <span class="badge bg-light-danger text-danger px-3 rounded-pill" style="font-size: 0.65rem;">RESIGNED {{ $emp->resigned_at->format('d/m/Y') }}</span>
+                                        <span class="badge bg-light-danger text-danger px-3 rounded-pill" style="font-size: 0.65rem;">Resigned {{ $emp->resigned_at->format('d/m/Y') }}</span>
                                     @else
-                                        <span class="badge bg-light-success text-success px-3 rounded-pill" style="font-size: 0.65rem;">ACTIVE</span>
+                                        <span class="badge bg-light-success text-success px-3 rounded-pill" style="font-size: 0.65rem;">Active</span>
                                     @endif
                                     <div class="text-muted small mt-1" style="font-size: 0.7rem;">
                                         {{ $emp->joined_at ? 'Joined ' . $emp->joined_at->format('d/m/Y') : 'No join date' }}
@@ -110,7 +110,7 @@
 
 @section('modals')
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">New Personnel Registration</h5>
@@ -120,19 +120,19 @@
                     @csrf
                     <div class="modal-body p-4 p-md-5">
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Full Name</label>
+                            <label class="form-label">Full Name</label>
                             <input type="text" name="name" class="form-control form-control-lg fs-6" required>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
+                            <label class="form-label">Email Address</label>
                             <input type="email" name="email" class="form-control form-control-lg fs-6" required>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Password</label>
+                            <label class="form-label">Password</label>
                             <input type="password" name="password" class="form-control form-control-lg fs-6" minlength="8" required>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Department Allocation</label>
+                            <label class="form-label">Department Allocation</label>
                             <select name="department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- Select Department --</option>
                                 @foreach($departments as $dept)
@@ -142,7 +142,7 @@
                         </div>
                         @hasrole('Super Admin')
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
+                            <label class="form-label">Role</label>
                             <select name="role" class="form-select form-select-lg fs-6" required>
                                 @foreach($roles as $role)
                                     <option value="{{ $role }}" {{ $role === 'Employee' ? 'selected' : '' }}>{{ $role }}</option>
@@ -153,7 +153,7 @@
                         <p class="text-muted small mb-4">New employees are created with the baseline "Employee" role. Only a Super Admin can assign a different role.</p>
                         @endhasrole
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Job Level</label>
+                            <label class="form-label">Job Level</label>
                             <select name="job_level" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
                                 @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $level)
@@ -163,11 +163,11 @@
                         </div>
                         <div class="row g-3">
                             <div class="col-6">
-                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Join</label>
+                                <label class="form-label">Date of Join</label>
                                 <input type="date" name="joined_at" class="form-control form-control-lg fs-6">
                             </div>
                             <div class="col-6">
-                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Resign</label>
+                                <label class="form-label">Date of Resign</label>
                                 <input type="date" name="resigned_at" class="form-control form-control-lg fs-6">
                                 <small class="text-muted d-block mt-1">Leave blank if still active.</small>
                             </div>
@@ -175,7 +175,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">REGISTER EMPLOYEE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Register Employee</button>
                     </div>
                 </form>
             </div>
@@ -184,7 +184,7 @@
 
     @foreach($employees as $emp)
     <div class="modal fade" id="edit-modal-{{ $emp->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Update Employee Data</h5>
@@ -194,15 +194,15 @@
                     @csrf @method('PUT')
                     <div class="modal-body p-4 p-md-5">
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Full Name</label>
+                            <label class="form-label">Full Name</label>
                             <input type="text" name="name" value="{{ $emp->name }}" class="form-control form-control-lg fs-6" required>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
+                            <label class="form-label">Email Address</label>
                             <input type="email" name="email" value="{{ $emp->email }}" class="form-control form-control-lg fs-6">
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Department Allocation</label>
+                            <label class="form-label">Department Allocation</label>
                             <select name="department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- No Department --</option>
                                 @foreach($departments as $dept)
@@ -211,7 +211,7 @@
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Job Level</label>
+                            <label class="form-label">Job Level</label>
                             <select name="job_level" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
                                 @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $level)
@@ -221,7 +221,7 @@
                         </div>
                         @hasrole('Super Admin')
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Role</label>
+                            <label class="form-label">Role</label>
                             <select name="role" class="form-select form-select-lg fs-6">
                                 @foreach($roles as $role)
                                     <option value="{{ $role }}" {{ $emp->hasRole($role) ? 'selected' : '' }}>{{ $role }}</option>
@@ -231,11 +231,11 @@
                         @endhasrole
                         <div class="row g-3">
                             <div class="col-6">
-                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Join</label>
+                                <label class="form-label">Date of Join</label>
                                 <input type="date" name="joined_at" value="{{ $emp->joined_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
                             </div>
                             <div class="col-6">
-                                <label class="form-label text-muted fw-bold small text-uppercase">Date of Resign</label>
+                                <label class="form-label">Date of Resign</label>
                                 <input type="date" name="resigned_at" value="{{ $emp->resigned_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
                                 <small class="text-muted d-block mt-1">Leave blank if still active.</small>
                             </div>
@@ -243,7 +243,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE PROFILE</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Update Profile</button>
                     </div>
                 </form>
             </div>
@@ -261,10 +261,8 @@
         $(document).ready(function() {
             $('#table1').DataTable({
                 "pageLength": 15,
-                "language": {
-                    "search": "Quick Filter:",
-                    "lengthMenu": "Display _MENU_ users"
-                }
+                "lengthMenu": [15, 25, 50, 100],
+                "language": window.PORTA_DT_LANGUAGE
             });
         });
     </script>

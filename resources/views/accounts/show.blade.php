@@ -38,11 +38,6 @@
         [data-bs-theme="dark"] .stat { background: rgba(255, 255, 255, .04); }
         [data-bs-theme="dark"] .person + .person { border-top-color: rgba(255, 255, 255, .06); }
         [data-bs-theme="dark"] .user-chip { background: rgba(129, 140, 248, .14); color: #e5e7eb; }
-        [data-bs-theme="dark"] .bg-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
-        [data-bs-theme="dark"] .bg-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
-        [data-bs-theme="dark"] .bg-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
-        [data-bs-theme="dark"] .bg-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
-        [data-bs-theme="dark"] .bg-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
         [data-bs-theme="dark"] .btn-light-primary  { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
     </style>
 @endsection

@@ -6,31 +6,6 @@
 @section('styles')
     <link rel="stylesheet" href="{{ asset('assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" crossorigin href="{{ asset('assets/compiled/css/table-datatable-jquery.css') }}">
-    <style>
-        /* 1. Professional Floating Header - NO GRAY */
-        #table1 thead th {
-            background-color: transparent !important; 
-            border-bottom: 2px solid rgba(67, 94, 190, 0.15) !important; /* Subtle Brand Blue line */
-            color: #435ebe !important; /* Primary Brand Blue text */
-            font-weight: 700 !important;
-            text-transform: uppercase;
-            font-size: 0.72rem;
-            letter-spacing: 0.5px;
-            padding: 1.2rem 1rem !important;
-        }
-
-        /* 2. Dark Mode Polish */
-        .theme-dark #table1 thead th {
-            color: #8c9eff !important; 
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        /* 3. Row Hover Transitions */
-        .table-hover tbody tr:hover {
-            background-color: rgba(67, 94, 190, 0.03) !important;
-            transition: background-color 0.2s ease;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -57,7 +32,7 @@
                 
                 <div class="mt-3 mt-md-0">
                     <button data-bs-toggle="modal" data-bs-target="#add-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                        <i class="bi bi-building-add me-1"></i> ADD DEPARTMENT
+                        <i class="bi bi-building-add me-1"></i> Add Department
                     </button>
                 </div>
             </div>
@@ -76,7 +51,7 @@
                         <tbody>
                             @foreach($topLevelDepartments as $dept)
                             <tr>
-                                <td class="fw-bold text-heading py-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                                <td class="fw-bold text-heading">
                                     {{ $dept->name }}
                                 </td>
                                 <td class="py-3">
@@ -84,7 +59,7 @@
                                 </td>
                                 <td class="text-center py-3">
                                     <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold" style="font-size: 0.65rem;">
-                                        {{ $dept->users_count }} PERSONNEL
+                                        {{ $dept->users_count }} {{ \Illuminate\Support\Str::plural('person', $dept->users_count) }}
                                     </span>
                                 </td>
                                 <td class="text-end py-3">
@@ -103,13 +78,13 @@
                             </tr>
                             @foreach($dept->children as $child)
                             <tr>
-                                <td class="fw-bold text-heading py-3 text-uppercase ps-5" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <td class="text-heading ps-5">
                                     <i class="bi bi-arrow-return-right text-muted me-1"></i>{{ $child->name }}
                                 </td>
                                 <td class="py-3 text-muted small">— reports to {{ $dept->name }}</td>
                                 <td class="text-center py-3">
                                     <span class="badge bg-light-primary text-primary px-3 rounded-pill fw-bold" style="font-size: 0.65rem;">
-                                        {{ $child->users_count }} PERSONNEL
+                                        {{ $child->users_count }} {{ \Illuminate\Support\Str::plural('person', $child->users_count) }}
                                     </span>
                                 </td>
                                 <td class="text-end py-3">
@@ -138,7 +113,7 @@
 
 @section('modals')
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">New Department Setup</h5>
@@ -148,12 +123,12 @@
                     @csrf
                     <div class="modal-body p-4 p-md-5">
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Department Name</label>
+                            <label class="form-label">Department Name</label>
                             <input type="text" name="name" class="form-control form-control-lg fs-6" placeholder="e.g. Finance, HR, IT Support" required>
                             <small class="text-muted d-block mt-2">Enter a unique name for the organizational unit.</small>
                         </div>
                         <div class="mb-2">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Parent Department</label>
+                            <label class="form-label">Parent Department</label>
                             <select name="parent_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- None (top-level department) --</option>
                                 @foreach($topLevelDepartments as $top)
@@ -165,7 +140,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE DEPARTMENT</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save Department</button>
                     </div>
                 </form>
             </div>
@@ -174,7 +149,7 @@
 
     @foreach($departments as $dept)
     <div class="modal fade" id="edit-modal-{{ $dept->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Update Department</h5>
@@ -184,13 +159,13 @@
                     @csrf @method('PUT')
                     <div class="modal-body p-4 p-md-5">
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Department Name</label>
+                            <label class="form-label">Department Name</label>
                             <input type="text" name="name" value="{{ $dept->name }}" class="form-control form-control-lg fs-6" required>
                         </div>
 
                         @if($dept->children->isEmpty())
                         <div class="mb-4">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Parent Department</label>
+                            <label class="form-label">Parent Department</label>
                             <select name="parent_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- None (top-level department) --</option>
                                 @foreach($topLevelDepartments->where('id', '!=', $dept->id) as $top)
@@ -205,7 +180,7 @@
 
                         @if(is_null($dept->parent_id))
                         <div class="mb-2">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Head of Department</label>
+                            <label class="form-label">Head of Department</label>
                             <select name="head_of_department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
                                 @foreach($dept->allUsers()->get() as $u)
@@ -220,7 +195,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE INFO</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Update Info</button>
                     </div>
                 </form>
             </div>
@@ -238,10 +213,7 @@
         $(document).ready(function() {
             $('#table1').DataTable({
                 "pageLength": 10,
-                "language": {
-                    "search": "Filter Departments:",
-                    "lengthMenu": "Display _MENU_ units"
-                }
+                "language": window.PORTA_DT_LANGUAGE
             });
         });
     </script>

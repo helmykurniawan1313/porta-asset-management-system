@@ -30,7 +30,7 @@
                 </div>
                 <div class="mt-3 mt-md-0">
                     <button data-bs-toggle="modal" data-bs-target="#add-client-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                        <i class="bi bi-person-plus me-1"></i> ADD CLIENT
+                        <i class="bi bi-person-plus me-1"></i> Add Client
                     </button>
                 </div>
             </div>
@@ -81,7 +81,7 @@
 
     {{-- Add Client modal --}}
     <div class="modal fade" id="add-client-modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <form method="POST" action="{{ route('clients.store') }}" class="modal-content hr-modal">
                 @csrf
                 <div class="modal-header border-0">

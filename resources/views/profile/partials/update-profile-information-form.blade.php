@@ -18,7 +18,7 @@
             @method('patch')
 
             <div class="mb-3">
-                <label for="name" class="form-label fw-bold text-muted small text-uppercase">{{ __('Name') }}</label>
+                <label for="name" class="form-label">{{ __('Name') }}</label>
                 <input id="name" name="name" type="text" class="form-control @error('name') is-invalid @enderror" 
                        value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
                 @if($errors->get('name'))
@@ -27,7 +27,7 @@
             </div>
 
             <div class="mb-4">
-                <label for="email" class="form-label fw-bold text-muted small text-uppercase">{{ __('Email') }}</label>
+                <label for="email" class="form-label">{{ __('Email') }}</label>
                 <input id="email" name="email" type="email" class="form-control @error('email') is-invalid @enderror" 
                        value="{{ old('email', $user->email) }}" required autocomplete="username">
                 
