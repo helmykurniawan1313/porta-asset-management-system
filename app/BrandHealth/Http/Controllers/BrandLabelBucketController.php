@@ -70,7 +70,7 @@ class BrandLabelBucketController extends Controller
     {
         return $request->validate([
             'metric' => [$requireMetric ? 'required' : 'sometimes', 'string', 'in:'.implode(',', BrandLabelBucket::METRICS)],
-            'min_score' => ['nullable', 'numeric'],
+            'min_score' => ['nullable', 'numeric', 'max:9999999999.99'],
             'label' => ['required', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'max:20'],
             'custom_color_bg' => ['nullable', 'string', 'max:20'],
