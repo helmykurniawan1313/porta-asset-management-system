@@ -15,6 +15,15 @@ class BrandPerformance extends Model
 
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // A post with no platform is an Instagram post. Storing that, rather than
+        // null, keeps cycle assignment and every where('platform', …) filter in step.
+        static::saving(function (BrandPerformance $performance) {
+            $performance->platform ??= 'instagram';
+        });
+    }
+
     public const NOTE_OPTIONS = [
         'Weekend Off',
         'National Holiday Off',
