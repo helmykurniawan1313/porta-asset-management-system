@@ -20,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -27,6 +28,13 @@ use Illuminate\Contracts\View\View as Response;
 
 class BrandPerformanceController extends Controller
 {
+    /**
+     * Relations shown per row (detail popup, exports, AI summary). Filtering,
+     * sorting and the status totals only need the account and latest snapshot,
+     * so the list loads these for the current page only.
+     */
+    private const ROW_RELATIONS = ['cycle', 'projectManager', 'conceptor', 'editor', 'videoLinks'];
+
     public function index(Request $request, ScoreBucketResolver $resolver): Response
     {
         $viewsBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_VIEWS)->get();
@@ -59,7 +67,7 @@ class BrandPerformanceController extends Controller
         $perPage = 15;
 
         $paginator = new LengthAwarePaginator(
-            $matching->forPage($page, $perPage)->values(),
+            (new EloquentCollection($matching->forPage($page, $perPage)->values()))->load(self::ROW_RELATIONS),
             $matching->count(),
             $perPage,
             $page,
@@ -176,7 +184,7 @@ class BrandPerformanceController extends Controller
         $viewsBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_VIEWS)->get();
         $followerBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_FOLLOWERS)->get();
 
-        return $this->filteredPerformances($request, $resolver, $viewsBuckets, $followerBuckets)
+        return $this->filteredPerformances($request, $resolver, $viewsBuckets, $followerBuckets, self::ROW_RELATIONS)
             ->map(fn (BrandPerformance $performance) => [
                 ...$performance->toArray(),
                 'post_date_formatted' => $performance->post_date->format('M j, Y'),
@@ -267,7 +275,7 @@ class BrandPerformanceController extends Controller
         $viewsBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_VIEWS)->get();
         $followerBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_FOLLOWERS)->get();
 
-        $performances = $this->filteredPerformances($request, $resolver, $viewsBuckets, $followerBuckets);
+        $performances = $this->filteredPerformances($request, $resolver, $viewsBuckets, $followerBuckets, self::ROW_RELATIONS);
 
         if ($performances->isEmpty()) {
             return response()->json(['message' => 'No performance records match the current filters.'], 422);
@@ -357,7 +365,7 @@ class BrandPerformanceController extends Controller
      * views_status/follower_category resolved. Shared by index(), pdfFiltered(),
      * and summarizeFiltered() so all three stay in lockstep.
      */
-    private function filteredPerformances(Request $request, ScoreBucketResolver $resolver, Collection $viewsBuckets, Collection $followerBuckets): Collection
+    private function filteredPerformances(Request $request, ScoreBucketResolver $resolver, Collection $viewsBuckets, Collection $followerBuckets, array $with = []): Collection
     {
         $postDateFrom = $request->string('post_date_from')->trim()->toString() ?: null;
         $postDateTo = $request->string('post_date_to')->trim()->toString() ?: null;
@@ -366,7 +374,7 @@ class BrandPerformanceController extends Controller
         $search = $request->string('search')->trim()->toString() ?: null;
         $viewsH7 = $this->parseNullableFilter($request, 'views_h7');
 
-        $matching = BrandPerformance::with(['account', 'cycle', 'projectManager', 'conceptor', 'editor', 'videoLinks', 'igSnapshots' => fn ($query) => $query->limit(1)])
+        $matching = BrandPerformance::with(['account', 'igSnapshots' => fn ($query) => $query->limit(1), ...$with])
             ->when($search, function ($query, $search) {
                 $query->whereHas('account', fn ($accountQuery) => $accountQuery->where('name', 'like', "%{$search}%"));
             })

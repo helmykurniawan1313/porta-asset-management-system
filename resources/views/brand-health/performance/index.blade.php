@@ -328,7 +328,8 @@
                     <div class="col-12">
                         <label class="form-label small fw-semibold bh-muted">Upload Proof (max 700KB)</label>
                         <div class="d-none mb-2" data-pf-proof-current>
-                            <img class="pd-proof" alt="Current proof"><br>
+                            <img class="pd-proof" alt="Current proof" onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">
+                            <small class="bh-faint d-none"><i class="bi bi-image"></i> Proof file is missing from storage — upload a new one below.</small><br>
                             <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none px-0" data-pf-proof-remove>Remove current proof</button>
                         </div>
                         <small class="d-none d-block mb-2" style="color: var(--status-parah-ink)" data-pf-proof-removed>Current proof will be removed when you save.</small>
@@ -378,6 +379,7 @@
 <script>
 const PERFS = @json($rows->values());
 const P_URLS = {
+    proof: (path) => @json(asset('storage')) + '/' + path,
     store: @json(route('brand-health.performances.store')),
     update: (id) => @json(route('brand-health.performances.update', '__ID__')).replace('__ID__', id),
     pdf: (id) => @json(route('brand-health.performances.pdf', '__ID__')).replace('__ID__', id),
@@ -461,7 +463,6 @@ const perfDetail = (function () {
                 ${chip('Preview Date', fmtDate(perf.preview_date))}
                 ${chip('Ads', perf.ads === null ? '-' : perf.ads ? 'Yes' : 'No')}
                 ${chip('Cycle', perf.cycle ? `${fmtDate(perf.cycle.cycle_start_date)} – ${fmtDate(perf.cycle.cycle_end_date)}` : '<span class="bh-faint">No matching cycle</span>')}
-                ${chip('Performa', BH.statusBadge(perf.views_status))}
                 ${perf.notes?.length ? `<div class="col-12"><div class="pd-chip"><div class="lbl">Notes</div><div class="d-flex flex-wrap gap-1 mt-1">${perf.notes.map((n) => `<span class="bh-pill">${BH.esc(n)}</span>`).join('')}</div></div></div>` : ''}
             </div>
             <div class="bh-stat-label mt-4 mb-2">Performance</div>
@@ -482,7 +483,13 @@ const perfDetail = (function () {
                     ${link.embed_html ? `<button type="button" class="btn btn-sm btn-light-primary text-nowrap" data-embed="${i}">View live post</button>` : ''}
                 </div><div data-embed-box="${i}"></div></div>`).join('') : '<p class="bh-faint small">No video links.</p>'}
             <div class="bh-stat-label mt-4 mb-2">Upload Proof</div>
-            ${perf.proof_path ? `<a href="/storage/${BH.esc(perf.proof_path)}" target="_blank" rel="noopener"><img src="/storage/${BH.esc(perf.proof_path)}" class="pd-proof" alt="Proof"></a>` : '<p class="bh-faint small">No proof uploaded.</p>'}`;
+            ${perf.proof_path ? `<a href="${BH.esc(P_URLS.proof(perf.proof_path))}" target="_blank" rel="noopener" data-pd-proof><img src="${BH.esc(P_URLS.proof(perf.proof_path))}" class="pd-proof" alt="Proof"></a>
+                <p class="bh-faint small d-none" data-pd-proof-missing><i class="bi bi-image"></i> Proof file is missing from storage. Upload it again from Edit.</p>` : '<p class="bh-faint small">No proof uploaded.</p>'}`;
+        // A recorded proof whose file isn't on disk (e.g. not carried over in an import) shows a note, not a broken image.
+        body.querySelector('[data-pd-proof] img')?.addEventListener('error', () => {
+            body.querySelector('[data-pd-proof]').classList.add('d-none');
+            body.querySelector('[data-pd-proof-missing]').classList.remove('d-none');
+        });
     }
 
     // Live embeds load only on request (keeps Instagram/TikTok embed traffic low).
@@ -627,7 +634,11 @@ const perfForm = (function () {
         q('[data-pf-proof-removed]').classList.add('d-none');
         const cur = q('[data-pf-proof-current]');
         cur.classList.toggle('d-none', !p?.proof_path);
-        if (p?.proof_path) cur.querySelector('img').src = '/storage/' + p.proof_path;
+        if (p?.proof_path) {
+            const img = cur.querySelector('img');
+            img.classList.remove('d-none'); img.nextElementSibling.classList.add('d-none');
+            img.src = P_URLS.proof(p.proof_path);
+        }
         igList.classList.add('d-none');
         syncIg();
     }
