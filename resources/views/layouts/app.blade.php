@@ -245,6 +245,8 @@
                     if (sel.classList.contains('form-select-sm')) {
                         choices.containerOuter.element.classList.add('is-small');
                     }
+                    // Lets page scripts change the value later: sel._choices.setChoiceByValue('5').
+                    sel._choices = choices;
                 });
             }
 
