@@ -176,6 +176,20 @@
             },
         };
     })();
+
+    // Stacked modals (e.g. a drill-down over a detail modal): lift each newly opened
+    // modal and its backdrop above the ones already open, and keep the body locked
+    // while any modal is still showing.
+    document.addEventListener('show.bs.modal', (e) => {
+        const open = document.querySelectorAll('.modal.show').length;
+        if (!open) return;
+        e.target.style.zIndex = 1055 + open * 20;
+        setTimeout(() => { const b = [...document.querySelectorAll('.modal-backdrop')].pop(); if (b) b.style.zIndex = 1050 + open * 20; });
+    });
+    document.addEventListener('hidden.bs.modal', (e) => {
+        e.target.style.zIndex = '';
+        if (document.querySelector('.modal.show')) document.body.classList.add('modal-open');
+    });
 </script>
 @yield('bh-scripts')
 @endsection
