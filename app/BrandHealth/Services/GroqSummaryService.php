@@ -4,6 +4,7 @@ namespace App\BrandHealth\Services;
 
 use App\BrandHealth\Models\BrandCycle;
 use App\BrandHealth\Models\BrandPerformance;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -51,17 +52,21 @@ class GroqSummaryService implements SummaryProvider
             throw new RuntimeException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
         }
 
-        $response = Http::withToken($apiKey)
-            ->timeout(30)
-            ->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => config('services.brand_health.groq.model', 'llama-3.3-70b-versatile'),
-                'messages' => [
-                    ['role' => 'system', 'content' => $systemPrompt],
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-                'temperature' => 0.4,
-                'max_tokens' => 1400,
-            ]);
+        try {
+            $response = Http::withToken($apiKey)
+                ->timeout(30)
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => config('services.brand_health.groq.model', 'llama-3.3-70b-versatile'),
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.4,
+                    'max_tokens' => 1400,
+                ]);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Could not reach the Groq API. Try again in a moment.');
+        }
 
         if ($response->failed()) {
             throw new RuntimeException(

@@ -4,6 +4,7 @@ namespace App\BrandHealth\Services;
 
 use App\BrandHealth\Models\BrandCycle;
 use App\BrandHealth\Models\BrandPerformance;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -53,19 +54,26 @@ class GeminiSummaryService implements SummaryProvider
 
         $model = config('services.brand_health.gemini.model', 'gemini-2.0-flash');
 
-        $response = Http::timeout(30)
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
-                'systemInstruction' => [
-                    'parts' => [['text' => $systemPrompt]],
-                ],
-                'contents' => [
-                    ['role' => 'user', 'parts' => [['text' => $prompt]]],
-                ],
-                'generationConfig' => [
-                    'temperature' => 0.4,
-                    'maxOutputTokens' => 2048,
-                ],
-            ]);
+        // The key goes in a header, never the URL: transport errors echo the
+        // URL back, and those messages are returned to the browser.
+        try {
+            $response = Http::withHeaders(['x-goog-api-key' => $apiKey])
+                ->timeout(30)
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'systemInstruction' => [
+                        'parts' => [['text' => $systemPrompt]],
+                    ],
+                    'contents' => [
+                        ['role' => 'user', 'parts' => [['text' => $prompt]]],
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.4,
+                        'maxOutputTokens' => 2048,
+                    ],
+                ]);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Could not reach the Gemini API. Try again in a moment.');
+        }
 
         if ($response->failed()) {
             throw new RuntimeException(
