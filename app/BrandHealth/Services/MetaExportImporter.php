@@ -49,22 +49,38 @@ class MetaExportImporter
 
         $runningFollowers = $startingFollowers ?? $this->latestKnownFollowers($account, $firstDate);
 
+        $columns = [
+            'reach' => $viewers,
+            'views' => $views,
+            'total_interactions' => $interactions,
+            'profile_visits' => $visits,
+            'link_clicks' => $linkClicks,
+        ];
+
         foreach ($dates as $date) {
+            // Only write metrics this import actually carries for the date, so
+            // uploading a subset of files never blanks out values already on
+            // record (from the API or an earlier import).
+            $values = [];
+
             if (array_key_exists($date, $follows) && $runningFollowers !== null) {
                 $runningFollowers += $follows[$date];
+                $values['followers_count'] = $runningFollowers;
+            }
+
+            foreach ($columns as $column => $series) {
+                if (array_key_exists($date, $series)) {
+                    $values[$column] = $series[$date];
+                }
+            }
+
+            if ($values === []) {
+                continue;
             }
 
             BrandInstagramDailySnapshot::updateOrCreate(
                 ['account_id' => $account->id, 'captured_date' => $date],
-                [
-                    'followers_count' => $runningFollowers,
-                    'reach' => $viewers[$date] ?? null,
-                    'views' => $views[$date] ?? null,
-                    'total_interactions' => $interactions[$date] ?? null,
-                    'profile_visits' => $visits[$date] ?? null,
-                    'link_clicks' => $linkClicks[$date] ?? null,
-                    'captured_at' => now(),
-                ],
+                $values + ['captured_at' => now()],
             );
         }
 
