@@ -219,10 +219,11 @@ class BrandReportPromptController extends Controller
 
     private function buildPrompt(string $monthFrom, string $monthTo, ?User $pm, array $sections): string
     {
-        $fromLabel = \Carbon\Carbon::createFromFormat('Y-m', $monthFrom)->format('F Y');
+        // Pin day 1: 'Y-m' alone takes today's day and rolls short months over on the 29th–31st.
+        $fromLabel = \Carbon\Carbon::createFromFormat('Y-m-d', "{$monthFrom}-01")->format('F Y');
         $periodLabel = $fromLabel;
         if ($monthTo !== $monthFrom) {
-            $toLabel = \Carbon\Carbon::createFromFormat('Y-m', $monthTo)->format('F Y');
+            $toLabel = \Carbon\Carbon::createFromFormat('Y-m-d', "{$monthTo}-01")->format('F Y');
             $periodLabel = "{$fromLabel} – {$toLabel}";
         }
 
