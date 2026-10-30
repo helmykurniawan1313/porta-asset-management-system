@@ -53,7 +53,7 @@ Write your final answer in Bahasa Indonesia, in natural, fluent, professional ma
         return $data;
     }
 
-    private function yesNo(?bool $value): string
+    private function yesNo(bool $value): string
     {
         return $value ? 'Yes' : 'No';
     }

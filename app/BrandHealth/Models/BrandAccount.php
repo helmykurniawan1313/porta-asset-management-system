@@ -2,6 +2,7 @@
 
 namespace App\BrandHealth\Models;
 
+
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,13 +11,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BrandAccount extends Model
 {
-    use HasFactory;
-
     protected $table = 'brand_accounts';
+
+    use HasFactory;
 
     protected $fillable = [
         'name',
-        'project_manager_id',
     ];
 
     protected $casts = [
@@ -43,10 +43,5 @@ class BrandAccount extends Model
     public function instagramDailySnapshots(): HasMany
     {
         return $this->hasMany(BrandInstagramDailySnapshot::class, 'account_id');
-    }
-
-    public function performances(): HasMany
-    {
-        return $this->hasMany(BrandPerformance::class, 'account_id');
     }
 }

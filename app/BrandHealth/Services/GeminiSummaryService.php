@@ -48,10 +48,10 @@ class GeminiSummaryService implements SummaryProvider
         $apiKey = config('services.brand_health.gemini.key');
 
         if (! $apiKey) {
-            throw new RuntimeException('Gemini API key is not configured. Set BRAND_HEALTH_GEMINI_API_KEY in your .env file.');
+            throw new RuntimeException('Gemini API key is not configured. Set GEMINI_API_KEY in your .env file.');
         }
 
-        $model = config('services.brand_health.gemini.model', 'gemini-flash-lite-latest');
+        $model = config('services.brand_health.gemini.model', 'gemini-2.0-flash');
 
         $response = Http::timeout(30)
             ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
@@ -63,7 +63,7 @@ class GeminiSummaryService implements SummaryProvider
                 ],
                 'generationConfig' => [
                     'temperature' => 0.4,
-                    'maxOutputTokens' => 1024,
+                    'maxOutputTokens' => 2048,
                 ],
             ]);
 

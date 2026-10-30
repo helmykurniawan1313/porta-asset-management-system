@@ -20,6 +20,6 @@ class BrandPerformanceVideoLink extends Model
 
     public function performance(): BelongsTo
     {
-        return $this->belongsTo(BrandPerformance::class, 'performance_id');
+        return $this->belongsTo(BrandPerformance::class);
     }
 }

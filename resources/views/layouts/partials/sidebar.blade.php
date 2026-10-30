@@ -138,29 +138,53 @@
                 @endcan
 
                 @php
-                    $isBrandHealthActive = request()->routeIs('brand-health.*');
+                    // Brand Health menu — same structure as Brand Matrix's navigation.
+                    $bhMenu = [
+                        ['Dashboard', 'bi-speedometer2', 'brand-health.dashboard', null],
+                        ['Account Health', 'bi-heart-pulse', null, [
+                            ['Overview', 'brand-health.account-health.index'],
+                            ['Cycles', 'brand-health.cycles.index'],
+                            ['Weekly Reports', 'brand-health.weekly-reports.index'],
+                            ['Account', 'brand-health.account-performance.index'],
+                            ['Growth', 'brand-health.account-growth.index'],
+                        ]],
+                        ['Views Trackers', 'bi-play-btn', null, [
+                            ['Overview', 'brand-health.views-trackers.index'],
+                            ['Reels / Video', 'brand-health.performances.index'],
+                            ['Account', 'brand-health.views-trend.index'],
+                        ]],
+                        ['Content Insights', 'bi-pie-chart', 'brand-health.content-insights.index', null],
+                        ['Accounts', 'bi-person-badge', 'brand-health.accounts.index', null],
+                        ['Brand Settings', 'bi-sliders', null, array_values(array_filter([
+                            ['Scoring Buckets', 'brand-health.score-buckets.index'],
+                            ['Legal Pages', 'brand-health.legal-pages.edit'],
+                            auth()->user()->can('admin-brand-health') ? ['Site Settings', 'brand-health.site-settings.edit'] : null,
+                            auth()->user()->can('admin-brand-health') ? ['Report Prompt', 'brand-health.report-prompt.index'] : null,
+                        ]))],
+                    ];
+                    // routeIs() with a wildcard on the route's resource ("brand-health.cycles.*").
+                    $bhActive = fn ($route) => request()->routeIs($route) || request()->routeIs(preg_replace('/\.[^.]+$/', '.*', $route));
                 @endphp
                 <li class="sidebar-title">Brand Health</li>
-                <li class="sidebar-item has-sub {{ $isBrandHealthActive ? 'active' : '' }}">
-                    <a href="#" class='sidebar-link'>
-                        <i class="bi bi-graph-up-arrow"></i>
-                        <span>Brand Health</span>
-                    </a>
-                    <ul class="submenu {{ $isBrandHealthActive ? 'active' : '' }}">
-                        <li class="submenu-item {{ request()->routeIs('brand-health.accounts.*') ? 'active' : '' }}">
-                            <a href="{{ route('brand-health.accounts.index') }}" class="submenu-link">Accounts</a>
+                @foreach($bhMenu as [$label, $icon, $route, $children])
+                    @if(! $children)
+                        <li class="sidebar-item {{ $bhActive($route) ? 'active' : '' }}">
+                            <a href="{{ route($route) }}" class="sidebar-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a>
                         </li>
-                        <li class="submenu-item {{ request()->routeIs('brand-health.cycles.*') ? 'active' : '' }}">
-                            <a href="{{ route('brand-health.cycles.index') }}" class="submenu-link">Cycles</a>
+                    @else
+                        @php $open = collect($children)->contains(fn ($c) => $bhActive($c[1])); @endphp
+                        <li class="sidebar-item has-sub {{ $open ? 'active' : '' }}">
+                            <a href="#" class="sidebar-link"><i class="bi {{ $icon }}"></i><span>{{ $label }}</span></a>
+                            <ul class="submenu {{ $open ? 'active' : '' }}">
+                                @foreach($children as [$childLabel, $childRoute])
+                                    <li class="submenu-item {{ $bhActive($childRoute) ? 'active' : '' }}">
+                                        <a href="{{ route($childRoute) }}" class="submenu-link">{{ $childLabel }}</a>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </li>
-                        <li class="submenu-item {{ request()->routeIs('brand-health.performances.*') ? 'active' : '' }}">
-                            <a href="{{ route('brand-health.performances.index') }}" class="submenu-link">Performances</a>
-                        </li>
-                        <li class="submenu-item {{ request()->routeIs('brand-health.scoring.*') ? 'active' : '' }}">
-                            <a href="{{ route('brand-health.scoring.index') }}" class="submenu-link">Scoring Settings</a>
-                        </li>
-                    </ul>
-                </li>
+                    @endif
+                @endforeach
 
                 @hasanyrole('HR Admin|IT Admin|Super Admin')
                 <li class="sidebar-title">Management</li>

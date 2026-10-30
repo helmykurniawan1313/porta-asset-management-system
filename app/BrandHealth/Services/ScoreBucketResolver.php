@@ -10,6 +10,13 @@ class ScoreBucketResolver
      * Resolves a rate to the value of the tier with the highest min_rate that is <= rate.
      * A null min_rate is treated as -infinity (the floor tier), so it always matches
      * unless a higher tier also matches.
+     *
+     * Single linear scan tracking the best match so far, instead of allocating a
+     * filtered + sorted Collection on every call — this is called many times per
+     * cycle (once per metric, per cycle), so the allocation overhead compounds
+     * noticeably on pages that score dozens/hundreds of cycles at once.
+     *
+     * @param  Collection  $buckets  Buckets for a single metric, each exposing $minKey and $valueKey.
      */
     public function resolve(Collection $buckets, float $rate, string $minKey = 'min_rate', string $valueKey = 'score'): mixed
     {

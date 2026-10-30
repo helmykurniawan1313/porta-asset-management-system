@@ -2,19 +2,21 @@
 
 namespace App\BrandHealth\Http\Controllers;
 
-use App\BrandHealth\Models\BrandLegalPage;
 use App\Http\Controllers\Controller;
+
+use App\BrandHealth\Models\BrandLegalPage;
+use HTMLPurifier;
+use HTMLPurifier_Config;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View as Response;
 
 class BrandLegalPageController extends Controller
 {
-    public function edit(Request $request): View
+    public function edit(): Response
     {
-        return view('brand-health.legal-pages.edit', [
+        return view('brand-health.settings.legal-pages', [
             'pages' => BrandLegalPage::orderBy('title')->get(['id', 'slug', 'title', 'content_html']),
-            'canManage' => $request->user()->can('edit-brand-health'),
         ]);
     }
 
@@ -24,15 +26,25 @@ class BrandLegalPageController extends Controller
             'content_html' => ['required', 'string'],
         ]);
 
-        // Basic tag stripping (no HTMLPurifier dependency in this app) — strong
-        // enough for a settings-only editor with a gated write route, but if this
-        // content is ever exposed to arbitrary untrusted editors, add HTMLPurifier.
-        $allowed = '<p><h2><h3><strong><em><ul><ol><li><a><br>';
-
         $legalPage->update([
-            'content_html' => strip_tags($data['content_html'], $allowed),
+            'content_html' => $this->purify($data['content_html']),
         ]);
 
-        return back()->with('status', 'Page updated.');
+        return back();
+    }
+
+    /**
+     * Strips anything beyond basic formatting (bold/italic/headings/lists/links) —
+     * this content is rendered on public, unauthenticated pages, so raw editor HTML
+     * must never be trusted as-is.
+     */
+    private function purify(string $html): string
+    {
+        $config = HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 'p,h2,h3,strong,em,ul,ol,li,a[href],br');
+        $config->set('HTML.TargetBlank', true);
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+
+        return (new HTMLPurifier($config))->purify($html);
     }
 }

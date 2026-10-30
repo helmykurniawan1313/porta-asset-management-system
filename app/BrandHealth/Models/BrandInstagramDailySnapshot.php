@@ -16,6 +16,8 @@ class BrandInstagramDailySnapshot extends Model
         'media_count',
         'reach',
         'views',
+        'profile_visits',
+        'link_clicks',
         'accounts_engaged',
         'total_interactions',
         'captured_at',
@@ -28,6 +30,6 @@ class BrandInstagramDailySnapshot extends Model
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(BrandAccount::class, 'account_id');
+        return $this->belongsTo(BrandAccount::class);
     }
 }

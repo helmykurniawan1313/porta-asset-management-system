@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')->group(base_path('routes/brand-health.php'));
         },
     )
+    // Brand Health's artisan commands live outside app/Console/Commands.
+    ->withCommands([__DIR__.'/../app/BrandHealth/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

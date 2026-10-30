@@ -6,6 +6,7 @@ use App\ClientOps\Models\Client;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -49,13 +50,21 @@ public function boot()
             || $client->isOwnedBy($user);
     });
 
-    // Brand Health module (ported from Brand Matrix) — TEMPORARY access rule
-    // per explicit product decision: all authenticated users can view Brand
-    // Health data, but only this one account can create/edit/delete while the
-    // module is being trialed. Replace with a real role/permission check once
-    // real ownership rules are decided.
+    // Brand Health editing mirrors Brand Matrix's "editor" role: Super Admins
+    // plus the Accounts department (incl. Accounts Manager), who own client data.
     Gate::define('edit-brand-health', function ($user) {
-        return $user->email === 'test@example.com';
+        return $user->hasRole('Super Admin') || $user->isInDepartment('Accounts');
+    });
+
+    // Brand Matrix's super-admin-only pages (site settings, report prompt).
+    Gate::define('admin-brand-health', fn ($user) => $user->hasRole('Super Admin'));
+
+    // Every Brand Health screen colours status badges from the label buckets
+    // (Brand Matrix shared these app-wide); load them once per request.
+    View::composer('brand-health.*', function ($view) {
+        static $buckets = null;
+        $buckets ??= \App\BrandHealth\Models\BrandLabelBucket::get(['id', 'metric', 'min_score', 'label', 'color', 'custom_color_bg', 'custom_color_ink']);
+        $view->with('bhLabelBuckets', $buckets);
     });
 }
 }

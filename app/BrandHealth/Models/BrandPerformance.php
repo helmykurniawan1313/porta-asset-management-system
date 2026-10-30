@@ -2,6 +2,7 @@
 
 namespace App\BrandHealth\Models;
 
+
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,9 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BrandPerformance extends Model
 {
-    use HasFactory;
-
     protected $table = 'brand_performances';
+
+    use HasFactory;
 
     public const NOTE_OPTIONS = [
         'Weekend Off',
@@ -24,6 +25,7 @@ class BrandPerformance extends Model
     protected $fillable = [
         'account_id',
         'platform',
+        'cycle_id',
         'post_date',
         'preview_date',
         'ads',
@@ -50,7 +52,12 @@ class BrandPerformance extends Model
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(BrandAccount::class, 'account_id');
+        return $this->belongsTo(BrandAccount::class);
+    }
+
+    public function cycle(): BelongsTo
+    {
+        return $this->belongsTo(BrandCycle::class);
     }
 
     public function projectManager(): BelongsTo
@@ -76,5 +83,10 @@ class BrandPerformance extends Model
     public function igSnapshots(): HasMany
     {
         return $this->hasMany(BrandPerformanceIgSnapshot::class, 'performance_id')->orderByDesc('fetched_at');
+    }
+
+    public function latestIgSnapshot(): HasMany
+    {
+        return $this->igSnapshots()->limit(1);
     }
 }

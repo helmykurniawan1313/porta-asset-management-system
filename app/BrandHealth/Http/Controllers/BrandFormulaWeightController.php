@@ -2,8 +2,9 @@
 
 namespace App\BrandHealth\Http\Controllers;
 
-use App\BrandHealth\Models\BrandFormulaWeight;
 use App\Http\Controllers\Controller;
+
+use App\BrandHealth\Models\BrandFormulaWeight;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -37,6 +38,6 @@ class BrandFormulaWeightController extends Controller
             );
         }
 
-        return back()->with('status', 'Formula weights updated.');
+        return back();
     }
 }

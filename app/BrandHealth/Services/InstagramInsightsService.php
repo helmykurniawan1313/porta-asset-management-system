@@ -29,6 +29,10 @@ class InstagramInsightsService
             ->json();
     }
 
+    /**
+     * Day-period metrics only. follower_count requires period=lifetime and must be
+     * fetched separately — mixing periods in one call silently drops the mismatched metric.
+     */
     public function dailyInsights(BrandAccount $account): array
     {
         return $this->request($account)

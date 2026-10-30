@@ -48,7 +48,7 @@ class GroqSummaryService implements SummaryProvider
         $apiKey = config('services.brand_health.groq.key');
 
         if (! $apiKey) {
-            throw new RuntimeException('Groq API key is not configured. Set BRAND_HEALTH_GROQ_API_KEY in your .env file.');
+            throw new RuntimeException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
         }
 
         $response = Http::withToken($apiKey)
@@ -60,7 +60,7 @@ class GroqSummaryService implements SummaryProvider
                     ['role' => 'user', 'content' => $prompt],
                 ],
                 'temperature' => 0.4,
-                'max_tokens' => 700,
+                'max_tokens' => 1400,
             ]);
 
         if ($response->failed()) {
