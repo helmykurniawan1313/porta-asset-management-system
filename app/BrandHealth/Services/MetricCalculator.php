@@ -10,6 +10,15 @@ use Illuminate\Support\Collection;
 
 class MetricCalculator
 {
+    /**
+     * Settings indexed into plain arrays, keyed by the identity of the collections they
+     * came from. Pages score hundreds of cycles with the same three collections, so the
+     * grouping/filtering below happens once per request instead of once per cycle.
+     *
+     * @var array{key: string, refs: array, scores: array, labels: array, weights: array}|null
+     */
+    private ?array $index = null;
+
     public function __construct(
         private readonly ScoreBucketResolver $resolver = new ScoreBucketResolver(),
     ) {
@@ -43,8 +52,7 @@ class MetricCalculator
         // resolved per-metric in resolveScore() below, since a metric can
         // have a platform+tier-specific bucket set, a platform-only one, or
         // only the global one, and the right fallback differs per metric.
-        $scoreBucketsByMetric = $scoreBuckets->groupBy('metric');
-        $labelBucketsByMetric = $labelBuckets->groupBy('metric');
+        ['scores' => $scoreBucketsByMetric, 'labels' => $labelBucketsByMetric, 'weights' => $formulaWeights] = $this->index($scoreBuckets, $labelBuckets, $formulaWeights);
 
         $isTiktok = $platform === 'tiktok';
 
@@ -147,16 +155,16 @@ class MetricCalculator
     /**
      * @param  array<string, float>  $components  component name => its computed score/rate value.
      */
-    private function weightedAverage(Collection $formulaWeights, string $aggregate, array $components): float
+    private function weightedAverage(array $formulaWeights, string $aggregate, array $components): float
     {
-        $weights = $formulaWeights->where('aggregate', $aggregate)->pluck('weight', 'component');
+        $weights = $formulaWeights[$aggregate] ?? [];
 
         $equalWeight = 1 / count($components);
         $totalWeight = 0.0;
         $weightedSum = 0.0;
 
         foreach ($components as $component => $value) {
-            $weight = $weights->has($component) ? (float) $weights->get($component) : $equalWeight;
+            $weight = array_key_exists($component, $weights) ? (float) $weights[$component] : $equalWeight;
             $weightedSum += $value * $weight;
             $totalWeight += $weight;
         }
@@ -176,9 +184,9 @@ class MetricCalculator
      * catch-all, so an admin can define global defaults and only add
      * platform/tier-specific overrides where the brief's thresholds differ.
      */
-    private function resolveScore(Collection $scoreBucketsByMetric, string $metric, float $rate, ?string $platform, ?string $tier): float
+    private function resolveScore(array $scoreBucketsByMetric, string $metric, float $rate, ?string $platform, ?string $tier): float
     {
-        $buckets = $scoreBucketsByMetric->get($metric, Collection::empty());
+        $sets = $scoreBucketsByMetric[$metric] ?? [];
 
         $fallbacks = [
             [$platform, $tier],
@@ -187,12 +195,10 @@ class MetricCalculator
         ];
 
         foreach ($fallbacks as [$fallbackPlatform, $fallbackTier]) {
-            $matching = $buckets->filter(
-                fn ($bucket) => $bucket->platform === $fallbackPlatform && $bucket->tier === $fallbackTier
-            );
+            $matching = $sets[self::setKey($fallbackPlatform, $fallbackTier)] ?? [];
 
-            if ($matching->isNotEmpty()) {
-                $value = $this->resolver->resolve($matching, $rate);
+            if ($matching !== []) {
+                $value = self::pick($matching, $rate);
 
                 return $value === null ? 0.0 : (float) $value;
             }
@@ -201,14 +207,77 @@ class MetricCalculator
         return 0.0;
     }
 
-    private function resolveLabel(Collection $labelBucketsByMetric, string $metric, float $score): ?string
+    private function resolveLabel(array $labelBucketsByMetric, string $metric, float $score): ?string
     {
-        return $this->resolver->resolve(
-            $labelBucketsByMetric->get($metric, Collection::empty()),
-            $score,
-            minKey: 'min_score',
-            valueKey: 'label',
-        );
+        return self::pick($labelBucketsByMetric[$metric] ?? [], $score);
+    }
+
+    /**
+     * Same rule as ScoreBucketResolver::resolve() (highest min <= value, a null min
+     * is the floor, earlier rows win ties, both sides rounded to 4 places), over
+     * pre-extracted [min, value] pairs.
+     *
+     * @param  array<int, array{0: float, 1: mixed}>  $tiers
+     */
+    private static function pick(array $tiers, float $value): mixed
+    {
+        $value = round($value, 4);
+        $winner = null;
+        $winnerMin = -INF;
+        $found = false;
+
+        foreach ($tiers as [$min, $result]) {
+            if ($min > $value) {
+                continue;
+            }
+
+            if (! $found || $min > $winnerMin) {
+                $winner = $result;
+                $winnerMin = $min;
+                $found = true;
+            }
+        }
+
+        return $winner;
+    }
+
+    private static function setKey(?string $platform, ?string $tier): string
+    {
+        return ($platform ?? "\0").'|'.($tier ?? "\0");
+    }
+
+    /**
+     * @return array{scores: array, labels: array, weights: array}
+     */
+    private function index(Collection $scoreBuckets, Collection $labelBuckets, Collection $formulaWeights): array
+    {
+        $key = spl_object_id($scoreBuckets).':'.$scoreBuckets->count().'|'.spl_object_id($labelBuckets).':'.$labelBuckets->count()
+            .'|'.spl_object_id($formulaWeights).':'.$formulaWeights->count();
+
+        if ($this->index !== null && $this->index['key'] === $key) {
+            return $this->index;
+        }
+
+        $min = fn ($v) => $v === null ? -INF : round((float) $v, 4);
+
+        $scores = [];
+        foreach ($scoreBuckets as $bucket) {
+            $scores[$bucket->metric][self::setKey($bucket->platform, $bucket->tier)][] = [$min($bucket->min_rate), $bucket->score];
+        }
+
+        $labels = [];
+        foreach ($labelBuckets as $bucket) {
+            $labels[$bucket->metric][] = [$min($bucket->min_score), $bucket->label];
+        }
+
+        $weights = [];
+        foreach ($formulaWeights as $weight) {
+            // pluck('weight', 'component') semantics: the last row for a component wins.
+            $weights[$weight->aggregate][$weight->component] = $weight->weight;
+        }
+
+        // Holding the collections keeps their object ids from being reused while this index lives.
+        return $this->index = ['key' => $key, 'refs' => [$scoreBuckets, $labelBuckets, $formulaWeights], 'scores' => $scores, 'labels' => $labels, 'weights' => $weights];
     }
 
     private function percentage(float $numerator, float $denominator): float

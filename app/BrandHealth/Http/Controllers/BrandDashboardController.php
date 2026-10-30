@@ -105,7 +105,9 @@ class BrandDashboardController extends Controller
     {
         $viewsBuckets = BrandLabelBucket::where('metric', BrandLabelBucket::METRIC_VIEWS)->get();
 
-        $performanceQuery = BrandPerformance::with(['igSnapshots' => fn ($query) => $query->limit(1)])
+        // Only the columns the summary and charts read: hydrating every post's full row was most of this page's cost.
+        $performanceQuery = BrandPerformance::select(['id', 'account_id', 'platform', 'post_date', 'total_views_h7'])
+            ->with(['igSnapshots' => fn ($query) => $query->limit(1)])
             ->orderBy('post_date');
         if ($platform !== 'all') {
             $performanceQuery->where('platform', $platform);
