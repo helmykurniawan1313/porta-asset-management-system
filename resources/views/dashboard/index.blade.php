@@ -130,7 +130,7 @@
                             @foreach($user->softwareAllocations as $allocation)
                                 <div class="d-flex justify-content-between align-items-center p-3 rounded task-row">
                                     <div>
-                                        <p class="fw-semibold mb-0">{{ $allocation->subscription->plan ?? '—' }}</p>
+                                        <p class="fw-semibold mb-0">{{ $allocation->subscription->label ?? '—' }}</p>
                                         <p class="text-muted small mb-0">{{ $allocation->subscription->period ?? '' }}</p>
                                     </div>
                                     <a href="{{ route('subscriptions.show', $allocation->subscription_id) }}" class="btn btn-sm btn-light-primary rounded-pill px-3">

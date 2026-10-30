@@ -20,12 +20,19 @@ class SubscriptionsSheetExport implements FromCollection, WithHeadings, WithMapp
     {
         return [
             $subscription->id,
-            $subscription->plan, 
+            $subscription->status,
+            $subscription->app,
+            $subscription->plan,
             $subscription->account ? $subscription->account->email : 'No Account Linked',
+            $subscription->login_with_google ? 'Yes' : 'No',
+            $subscription->shared_with,
+            $subscription->division,
             $subscription->period,
             $subscription->bill,
             $subscription->currency,
-            \Carbon\Carbon::parse($subscription->next_payment_date)->format('M d, Y'),
+            $subscription->next_payment_date?->format('M d, Y'),
+            $subscription->card_info,
+            $subscription->notes,
         ];
     }
 
@@ -33,12 +40,19 @@ class SubscriptionsSheetExport implements FromCollection, WithHeadings, WithMapp
     {
         return [
             'Sub ID',
+            'Status',
+            'App',
             'Plan Name',
             'Master Account',
+            'Login by Google',
+            'Shared With',
+            'Division',
             'Billing Period',
             'Amount',
             'Currency',
-            'Next Payment Date'
+            'Next Payment Date',
+            'Card',
+            'Note',
         ];
     }
 

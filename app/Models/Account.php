@@ -11,4 +11,9 @@ class Account extends Model
     public function subscriptions() {
         return $this->hasMany(Subscription::class);
     }
+
+    // Employees who use this login.
+    public function users() {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
 }

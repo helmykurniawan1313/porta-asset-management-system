@@ -7,42 +7,108 @@
     <link rel="stylesheet" href="{{ asset('assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" crossorigin href="{{ asset('assets/compiled/css/table-datatable-jquery.css') }}">
     <style>
-        /* 1. Professional Floating Header - NO GRAY */
-       
-
-        /* 2. Row Hover & Transitions */
-        .table-hover tbody tr:hover {
-            background-color: rgba(67, 94, 190, 0.03) !important;
-            transition: background-color 0.2s ease;
+        .table-hover tbody tr:hover { background-color: rgba(67, 94, 190, 0.03) !important; }
+        .app-avatar {
+            width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0;
+            font-weight: 800; font-size: .95rem; color: #fff;
         }
-
-        /* 3. Dark Mode Polish */
-        .theme-dark #table1 thead th {
-            color: #8c9eff !important; 
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+        .stat-card { border-radius: 16px !important; }
+        .stat-card .stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+        .stat-card .stat-lbl { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a94a6; }
+        .status-tabs .btn { border-radius: 999px; font-weight: 700; font-size: .8rem; }
+        tr.is-inactive td { opacity: .55; }
+        .user-chip {
+            display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .55rem .15rem .2rem;
+            border-radius: 999px; background: rgba(67, 94, 190, .08); color: inherit; font-size: .78rem; font-weight: 600;
+            white-space: nowrap; text-decoration: none;
         }
+        .user-chip:hover { background: rgba(67, 94, 190, .16); }
+        .user-dot {
+            width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+            background: #435ebe; color: #fff; font-size: .65rem; font-weight: 800;
+        }
+        span.user-chip:not(:has(.user-dot)) { padding-left: .55rem; }
+        [data-bs-theme="dark"] .user-chip { background: rgba(129, 140, 248, .14); color: #e5e7eb; }
+        [data-bs-theme="dark"] .user-dot { background: #6366f1; }
+
+        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
+        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
+        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
+        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
+        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
+        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
 @endsection
 
 @section('content')
+@php
+    $active = $subscriptions->where('status', 'Active');
+    $dueSoon = $active->filter(fn ($s) => $s->isRecurring() && $s->days_remaining !== null && $s->days_remaining <= 30);
+    // Monthly-equivalent spend of active recurring licenses, per currency (no FX conversion).
+    $monthly = $active->filter(fn ($s) => $s->isRecurring() && $s->bill)
+        ->groupBy('currency')
+        ->map(fn ($g) => $g->sum(fn ($s) => $s->period === 'Yearly' ? $s->bill / 12 : $s->bill));
+    $palette = ['#435ebe', '#e11d48', '#0891b2', '#7c3aed', '#059669', '#d97706', '#db2777', '#2563eb'];
+    $appColor = fn ($app) => $palette[crc32(strtolower($app ?? '')) % count($palette)];
+    $money = fn ($amount, $cur) => $amount === null ? '—' : trim(($cur ?? '').' '.number_format($amount, $cur === 'IDR' ? 0 : 2, $cur === 'IDR' ? ',' : '.', $cur === 'IDR' ? '.' : ','));
+@endphp
 
 @if(session('success'))
     <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4" role="alert">
-        <i class="bi bi-check-circle me-2"></i>
-        {{ session('success') }}
+        <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
     </div>
 @endif
+@if($errors->any())
+    <div class="alert alert-light-danger color-danger shadow-sm mb-4">{{ $errors->first() }}</div>
+@endif
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card border-0 shadow-sm h-100 mb-0"><div class="card-body">
+            <div class="stat-lbl">Active licenses</div>
+            <div class="stat-num">{{ $active->count() }}</div>
+            <small class="text-muted">{{ $subscriptions->count() - $active->count() }} inactive</small>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card border-0 shadow-sm h-100 mb-0"><div class="card-body">
+            <div class="stat-lbl">Renewing in 30 days</div>
+            <div class="stat-num {{ $dueSoon->count() ? 'text-warning' : '' }}">{{ $dueSoon->count() }}</div>
+            <small class="text-muted">{{ $dueSoon->filter(fn ($s) => $s->days_remaining < 0)->count() }} overdue</small>
+        </div></div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card stat-card border-0 shadow-sm h-100 mb-0"><div class="card-body">
+            <div class="stat-lbl">Monthly spend (active, yearly ÷ 12)</div>
+            <div class="d-flex flex-wrap gap-4 mt-1">
+                @forelse($monthly as $cur => $total)
+                    <div class="stat-num" style="font-size: 1.3rem;">{{ $money($total, $cur) }}</div>
+                @empty
+                    <div class="stat-num">—</div>
+                @endforelse
+            </div>
+        </div></div>
+    </div>
+</div>
 
 <section class="section">
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
-                <h4 class="fw-bold mb-1">Active Subscriptions</h4>
-                <p class="text-muted small mb-0">Manage and track your recurring software costs.</p>
+                <h4 class="fw-bold mb-1">Software Licenses</h4>
+                <p class="text-muted small mb-0">Every app login, who shares it, and when it renews.</p>
             </div>
-            <div class="mt-3 mt-md-0">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="btn-group status-tabs" role="group">
+                    <button type="button" class="btn btn-sm btn-primary" data-status="Active">Active</button>
+                    <button type="button" class="btn btn-sm btn-light-secondary" data-status="Inactive">Inactive</button>
+                    <button type="button" class="btn btn-sm btn-light-secondary" data-status="">All</button>
+                </div>
+                <a href="{{ route('accounts.index') }}" class="btn btn-light-primary btn-sm px-3 fw-bold">
+                    <i class="bi bi-person-lines-fill me-1"></i> Accounts
+                </a>
                 <button data-bs-toggle="modal" data-bs-target="#add-sub-modal" class="btn btn-primary btn-sm px-4 fw-bold shadow-sm">
-                    <i class="bi bi-plus-lg me-1"></i> ADD SUBSCRIPTION
+                    <i class="bi bi-plus-lg me-1"></i> Add License
                 </button>
             </div>
         </div>
@@ -52,122 +118,127 @@
                 <table class="table table-hover align-middle" id="table1">
                     <thead>
                         <tr>
-                            <th>Account</th>
-                            <th>Plan & Assignments</th>
-                            <th>Period</th>
-                            <th>Bill / Currency</th>
-                            <th class="text-end">Due In</th>
+                            <th>App & Plan</th>
+                            <th>Login</th>
+                            <th>Used By</th>
+                            <th>Cost</th>
+                            <th class="text-end">Renewal</th>
+                            <th class="d-none">Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($subscriptions as $sub)
-                        <tr>
-                            <td class="fw-bold text-heading py-3">{{ $sub->account->email }}</td>
+                        @foreach($subscriptions as $sub)
+                        @php $days = $sub->days_remaining; @endphp
+                        <tr class="{{ $sub->status === 'Inactive' ? 'is-inactive' : '' }}">
                             <td class="py-3">
-                                <a href="{{ route('subscriptions.show', $sub->id) }}" class="fw-bold text-primary text-decoration-none">
-                                    {{ $sub->plan }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
-                                </a>
-                                <div class="mt-1 d-flex gap-2">
-                                    @php
-                                        $dCount = $sub->allocations->where('assignable_type', 'App\Models\Device')->count();
-                                        $uCount = $sub->allocations->where('assignable_type', 'App\Models\User')->count();
-                                    @endphp
-                                    <span class="badge {{ $dCount > 0 ? 'bg-light-success text-success' : 'bg-light-secondary text-secondary' }} border-0 px-2" style="font-size: 0.65rem;">
-                                        {{ $dCount }} DEVICES
-                                    </span>
-                                    <span class="badge {{ $uCount > 0 ? 'bg-light-warning text-warning' : 'bg-light-secondary text-secondary' }} border-0 px-2" style="font-size: 0.65rem;">
-                                        {{ $uCount }} USERS
-                                    </span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="app-avatar" style="background: {{ $appColor($sub->app) }};">{{ strtoupper(substr($sub->app ?? '?', 0, 1)) }}</div>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('subscriptions.show', $sub->id) }}" class="fw-bold text-heading d-block">{{ $sub->app ?? 'Untitled' }}</a>
+                                        <small class="text-muted">{{ $sub->plan ?? 'No plan' }}</small>
+                                        @if($sub->status === 'Inactive')<span class="badge bg-light-secondary text-secondary ms-1">Inactive</span>@endif
+                                    </div>
                                 </div>
                             </td>
-                            <td class="text-muted fw-bold small py-3">{{ strtoupper($sub->period) }}</td>
                             <td class="py-3">
-                                <span class="fw-bolder">{{ number_format($sub->bill, 2) }}</span>
-                                <small class="text-muted ms-1 fw-bold">{{ $sub->currency }}</small>
+                                <div class="small fw-semibold text-break">{{ $sub->account->email ?? '—' }}</div>
+                                @if($sub->login_with_google)
+                                    <span class="badge bg-light-info text-info mt-1"><i class="bi bi-google"></i> Google</span>
+                                @endif
                             </td>
-                            <td class="text-end py-3">
-                                @php $days = $sub->days_remaining; @endphp
-                                <span class="badge {{ $days <= 7 ? 'bg-danger' : 'bg-success' }} px-3 rounded-pill shadow-sm" style="font-size: 0.7rem;">
-                                    {{ $days < 0 ? 'OVERDUE' : $days . ' DAYS' }}
-                                </span>
+                            @php
+                                $users = $sub->allocations->where('assignable_type', \App\Models\User::class)
+                                    ->map->assignable->filter()->sortBy('name')->values();
+                            @endphp
+                            <td class="py-3" style="max-width: 300px;" data-search="{{ $users->pluck('name')->implode(' ') }} {{ $sub->shared_with }}">
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($users->take(3) as $u)
+                                        <a href="{{ route('employees.show', $u->id) }}" class="user-chip" title="{{ $u->name }}">
+                                            <span class="user-dot">{{ strtoupper(substr($u->name, 0, 1)) }}</span>{{ \Illuminate\Support\Str::words($u->name, 2, '') }}
+                                        </a>
+                                    @endforeach
+                                    @if($users->count() > 3)
+                                        <span class="user-chip" title="{{ $users->slice(3)->pluck('name')->implode(', ') }}">+{{ $users->count() - 3 }} more</span>
+                                    @endif
+                                </div>
+                                @if($sub->shared_with)
+                                    <small class="text-muted d-block mt-1 text-truncate" title="{{ $sub->shared_with }}"><i class="bi bi-people"></i> {{ $sub->shared_with }}</small>
+                                @elseif($users->isEmpty())
+                                    <span class="text-muted">—</span>
+                                @endif
+                                @if($sub->division)<small class="text-muted">{{ $sub->division }}</small>@endif
                             </td>
+                            <td class="py-3 text-nowrap" data-order="{{ $sub->bill ?? -1 }}">
+                                <div class="fw-bold">{{ $money($sub->bill, $sub->currency) }}</div>
+                                <small class="text-muted">{{ $sub->period }}</small>
+                            </td>
+                            <td class="text-end py-3 text-nowrap" data-order="{{ $days ?? 99999 }}">
+                                @if($sub->status === 'Inactive')
+                                    <span class="text-muted small">{{ $sub->next_payment_date ? 'Ended '.$sub->next_payment_date->format('d M Y') : '—' }}</span>
+                                @elseif($days === null)
+                                    <span class="badge bg-light-secondary text-secondary">{{ $sub->period === 'Free' ? 'Free' : 'No renewal' }}</span>
+                                @else
+                                    <span class="badge {{ $days < 0 ? 'bg-danger' : ($days <= 7 ? 'bg-light-danger text-danger' : ($days <= 30 ? 'bg-light-warning text-warning' : 'bg-light-success text-success')) }} px-3 rounded-pill">
+                                        {{ $days < 0 ? abs($days).' days overdue' : ($days === 0 ? 'Today' : $days.' days') }}
+                                    </span>
+                                    <div class="text-muted small mt-1">{{ $sub->next_payment_date->format('d M Y') }}</div>
+                                @endif
+                            </td>
+                            <td class="d-none">{{ $sub->status }}</td>
                             <td class="text-end py-3">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" data-bs-toggle="modal" data-bs-target="#edit-sub-modal-{{ $sub->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3">
+                                    @if($sub->status === 'Active' && $sub->isRecurring())
+                                        <form action="{{ route('subscriptions.renew', $sub->id) }}" method="POST" class="d-inline"
+                                              onsubmit="return confirm('Mark {{ e(addslashes($sub->label)) }} as paid?\n\nRenewal: {{ $sub->next_payment_date?->format('d M Y') ?? 'not set' }} → {{ $sub->nextRenewalDate()->format('d M Y') }}')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-light-success rounded-pill px-3" title="Paid — renew {{ $sub->period === 'Yearly' ? '1 year' : '1 month' }}">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('subscriptions.show', $sub->id) }}" class="btn btn-sm btn-light-primary rounded-pill px-3" title="View"><i class="bi bi-eye"></i></a>
+                                    <button type="button" data-bs-toggle="modal" data-bs-target="#edit-sub-modal-{{ $sub->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <form action="{{ route('inventory.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this subscription?')">
+                                    <form action="{{ route('subscriptions.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this license?')">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <button type="submit" class="btn btn-sm btn-light-danger rounded-pill px-3" title="Delete"><i class="bi bi-trash"></i></button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
-                        @empty
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </section>
+
+<datalist id="app-options">
+    @foreach($subscriptions->pluck('app')->filter()->unique()->sort() as $app)
+        <option value="{{ $app }}">
+    @endforeach
+</datalist>
 @endsection
 
 @section('modals')
 <div class="modal fade" id="add-sub-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Register New Plan</h5>
+                <h5 class="modal-title fw-bold">Add License</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('subscriptions.store') }}" method="POST">
                 @csrf
-                <div class="modal-body p-4 p-md-5">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Master Account</label>
-                            <select name="account_id" class="form-select" required>
-                                <option value="">-- Select Account --</option>
-                                @foreach($accounts as $acc)
-                                    <option value="{{ $acc->id }}">{{ $acc->email }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Plan Name</label>
-                            <input type="text" name="plan" placeholder="e.g. Adobe Creative Cloud" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Billing Period</label>
-                            <select name="period" class="form-select">
-                                <option value="Monthly">Monthly</option>
-                                <option value="Yearly">Yearly</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Next Payment Date</label>
-                            <input type="date" name="next_payment_date" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Amount</label>
-                            <input type="number" step="0.01" name="bill" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Currency</label>
-                            <select name="currency" class="form-select">
-                                <option value="USD">USD</option>
-                                <option value="IDR">IDR</option>
-                            </select>
-                        </div>
-                    </div>
+                <div class="modal-body p-4">
+                    @include('subscriptions._form', ['sub' => null])
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold">SAVE SUBSCRIPTION</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Save License</button>
                 </div>
             </form>
         </div>
@@ -176,55 +247,20 @@
 
 @foreach($subscriptions as $sub)
 <div class="modal fade" id="edit-sub-modal-{{ $sub->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 1px;">Edit {{ $sub->plan }}</h5>
+                <h5 class="modal-title fw-bold">Edit {{ $sub->label }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('subscriptions.update', $sub->id) }}" method="POST">
                 @csrf @method('PUT')
-                <div class="modal-body p-4 p-md-5">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Master Account</label>
-                            <select name="account_id" class="form-select" required>
-                                @foreach($accounts as $acc)
-                                    <option value="{{ $acc->id }}" {{ $sub->account_id == $acc->id ? 'selected' : '' }}>{{ $acc->email }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Plan Name</label>
-                            <input type="text" name="plan" value="{{ $sub->plan }}" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Billing Period</label>
-                            <select name="period" class="form-select">
-                                <option value="Monthly" {{ $sub->period == 'Monthly' ? 'selected' : '' }}>Monthly</option>
-                                <option value="Yearly" {{ $sub->period == 'Yearly' ? 'selected' : '' }}>Yearly</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Next Payment Date</label>
-                            <input type="date" name="next_payment_date" value="{{ \Carbon\Carbon::parse($sub->next_payment_date)->format('Y-m-d') }}" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Amount</label>
-                            <input type="number" step="0.01" name="bill" value="{{ $sub->bill }}" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase">Currency</label>
-                            <select name="currency" class="form-select">
-                                <option value="USD" {{ $sub->currency == 'USD' ? 'selected' : '' }}>USD</option>
-                                <option value="IDR" {{ $sub->currency == 'IDR' ? 'selected' : '' }}>IDR</option>
-                            </select>
-                        </div>
-                    </div>
+                <div class="modal-body p-4">
+                    @include('subscriptions._form', ['sub' => $sub])
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold">UPDATE PLAN</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Update License</button>
                 </div>
             </form>
         </div>
@@ -237,14 +273,29 @@
     <script src="{{ asset('assets/extensions/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/extensions/datatables.net/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-    
+
     <script>
-        $(document).ready(function() {
-            // Initialize jQuery DataTables
-            $('#table1').DataTable({
-                "pageLength": 10,
-                "order": [[4, "asc"]] // Sort by due date (days remaining) by default
+        $(document).ready(function () {
+            const table = $('#table1').DataTable({
+                pageLength: 25,
+                order: [[4, 'asc']], // soonest renewal first
+                columnDefs: [{ targets: [5], visible: false }],
+                language: { search: 'Search:' }
             });
+
+            // Status tabs filter the hidden Status column (exact match).
+            const tabs = document.querySelectorAll('.status-tabs [data-status]');
+            function applyStatus(status) {
+                table.column(5).search(status ? '^' + status + '$' : '', true, false).draw();
+                tabs.forEach(b => {
+                    const on = b.dataset.status === status;
+                    b.classList.toggle('btn-primary', on);
+                    b.classList.toggle('btn-light-secondary', !on);
+                });
+            }
+            tabs.forEach(b => b.addEventListener('click', () => applyStatus(b.dataset.status)));
+            applyStatus('Active');
+            // "Used by" and the other long selects become searchable via the app-wide helper in the layout.
         });
     </script>
 @endsection

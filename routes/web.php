@@ -37,8 +37,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/inventory/export/{category?}', [DeviceController::class, 'export'])->name('inventory.export');
     Route::post('/inventory/attach', [DeviceController::class, 'attach'])->name('inventory.attach');
     Route::post('/inventory/detach/{device}', [DeviceController::class, 'detach'])->name('inventory.detach');
-    Route::post('/inventory/{device}/service', [DeviceController::class, 'storeService'])->name('inventory.service');
-    Route::post('/inventory/{device}/health', [DeviceController::class, 'storeHealth'])->name('inventory.health');
+    Route::post('/inventory/{device}/service', [DeviceController::class, 'service'])->name('inventory.service');
+    Route::post('/inventory/{device}/health', [DeviceController::class, 'health'])->name('inventory.health');
+    Route::post('/inventory/{device}/issues', [DeviceController::class, 'storeIssue'])->name('inventory.issues.store');
+    Route::patch('/inventory/issues/{issue}/resolve', [DeviceController::class, 'resolveIssue'])->name('inventory.issues.resolve');
+    Route::delete('/inventory/issues/{issue}', [DeviceController::class, 'destroyIssue'])->name('inventory.issues.destroy');
 
     /* --- INVENTORY CORE --- */
     Route::get('/inventory/{category?}', [DeviceController::class, 'index'])->name('inventory.index');
@@ -48,6 +51,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventory/{device}', [DeviceController::class, 'destroy'])->name('inventory.destroy');
 
     /* --- HR & STAFF --- */
+    Route::post('/employees/{employee}/accounts', [EmployeeController::class, 'attachAccount'])->name('employees.accounts.attach');
+    Route::delete('/employees/{employee}/accounts/{account}', [EmployeeController::class, 'detachAccount'])->name('employees.accounts.detach');
     Route::post('/employees/import', [EmployeeController::class, 'importCsv'])->name('employees.import');
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
@@ -55,6 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /* --- ACCOUNTS & SUBSCRIPTIONS --- */
     Route::resource('accounts', AccountController::class);
     Route::resource('subscriptions', SubscriptionController::class);
+    Route::post('/subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
     Route::post('/subscriptions/{subscription}/allocate', [SubscriptionController::class, 'allocate'])->name('subscriptions.allocate');
     Route::delete('/allocations/{allocation}', [SubscriptionController::class, 'revoke'])->name('subscriptions.revoke');
 

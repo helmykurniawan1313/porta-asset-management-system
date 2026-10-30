@@ -54,7 +54,7 @@
                         'inventory/Motherboard', 'inventory/Processor', 'inventory/RAM', 
                         'inventory/SSD', 'inventory/HDD', 'inventory/GPU', 'inventory/Monitor', 
                         'inventory/UPS', 'inventory/Power Supply', 'inventory/Battery',
-                        'inventory/Keyboard', 'inventory/Mouse'
+                        'inventory/Keyboard', 'inventory/Mouse', 'inventory/SD Card'
                     );
                 @endphp
                 <li class="sidebar-item has-sub {{ $isCoreComponentActive ? 'active' : '' }}">
@@ -63,7 +63,24 @@
                         <span>Core Components</span>
                     </a>
                     <ul class="submenu {{ $isCoreComponentActive ? 'active' : '' }}">
-                        @foreach(['Motherboard', 'Processor', 'RAM', 'SSD', 'HDD', 'GPU', 'Monitor', 'UPS', 'Power Supply', 'Battery', 'Keyboard', 'Mouse'] as $nav)
+                        @foreach(['Motherboard', 'Processor', 'RAM', 'SSD', 'HDD', 'SD Card', 'GPU', 'Monitor', 'UPS', 'Power Supply', 'Battery', 'Keyboard', 'Mouse'] as $nav)
+                        <li class="submenu-item {{ request()->is('inventory/'.$nav) ? 'active' : '' }}">
+                            <a href="{{ route('inventory.index', $nav) }}" class="submenu-link">{{ $nav }}</a>
+                        </li>
+                        @endforeach
+                    </ul>
+                </li>
+
+                @php
+                    $isNetworkActive = request()->is('inventory/Router', 'inventory/Access Point', 'inventory/Switch');
+                @endphp
+                <li class="sidebar-item has-sub {{ $isNetworkActive ? 'active' : '' }}">
+                    <a href="#" class='sidebar-link'>
+                        <i class="bi bi-router-fill"></i>
+                        <span>Network</span>
+                    </a>
+                    <ul class="submenu {{ $isNetworkActive ? 'active' : '' }}">
+                        @foreach(\App\Models\Device::NETWORK_CATEGORIES as $nav)
                         <li class="submenu-item {{ request()->is('inventory/'.$nav) ? 'active' : '' }}">
                             <a href="{{ route('inventory.index', $nav) }}" class="submenu-link">{{ $nav }}</a>
                         </li>
@@ -119,6 +136,31 @@
                     </ul>
                 </li>
                 @endcan
+
+                @php
+                    $isBrandHealthActive = request()->routeIs('brand-health.*');
+                @endphp
+                <li class="sidebar-title">Brand Health</li>
+                <li class="sidebar-item has-sub {{ $isBrandHealthActive ? 'active' : '' }}">
+                    <a href="#" class='sidebar-link'>
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Brand Health</span>
+                    </a>
+                    <ul class="submenu {{ $isBrandHealthActive ? 'active' : '' }}">
+                        <li class="submenu-item {{ request()->routeIs('brand-health.accounts.*') ? 'active' : '' }}">
+                            <a href="{{ route('brand-health.accounts.index') }}" class="submenu-link">Accounts</a>
+                        </li>
+                        <li class="submenu-item {{ request()->routeIs('brand-health.cycles.*') ? 'active' : '' }}">
+                            <a href="{{ route('brand-health.cycles.index') }}" class="submenu-link">Cycles</a>
+                        </li>
+                        <li class="submenu-item {{ request()->routeIs('brand-health.performances.*') ? 'active' : '' }}">
+                            <a href="{{ route('brand-health.performances.index') }}" class="submenu-link">Performances</a>
+                        </li>
+                        <li class="submenu-item {{ request()->routeIs('brand-health.scoring.*') ? 'active' : '' }}">
+                            <a href="{{ route('brand-health.scoring.index') }}" class="submenu-link">Scoring Settings</a>
+                        </li>
+                    </ul>
+                </li>
 
                 @hasanyrole('HR Admin|IT Admin|Super Admin')
                 <li class="sidebar-title">Management</li>

@@ -48,5 +48,14 @@ public function boot()
         return $user->hasAnyRole(['Finance', 'HR Admin', 'Super Admin'])
             || $client->isOwnedBy($user);
     });
+
+    // Brand Health module (ported from Brand Matrix) — TEMPORARY access rule
+    // per explicit product decision: all authenticated users can view Brand
+    // Health data, but only this one account can create/edit/delete while the
+    // module is being trialed. Replace with a real role/permission check once
+    // real ownership rules are decided.
+    Gate::define('edit-brand-health', function ($user) {
+        return $user->email === 'test@example.com';
+    });
 }
 }

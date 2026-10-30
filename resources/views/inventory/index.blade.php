@@ -13,11 +13,20 @@
         
         /* Subtle row highlight */
         .table-hover tbody tr:hover { background-color: rgba(67, 94, 190, 0.04) !important; }
+
+        /* Dark mode: the template's pale "light-*" badges/buttons stay pastel; use translucent tints. */
+        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
+        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
+        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
+        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
+        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
+        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
  
 @endsection
 
 @section('content')
+    @php $isNetwork = in_array($category, \App\Models\Device::NETWORK_CATEGORIES); @endphp
 
     @if($category == 'Dashboard')
     <div class="row mb-4">
@@ -87,15 +96,29 @@
                 {{-- Clean, Transparent Header --}}
                 <tr>
                     <th>NAME</th>
+                    @if($isNetwork)
+                        <th>DEVICE</th>
+                        <th>LOCATION</th>
+                        @if($category != 'Switch')<th>WI-FI (SSID)</th>@endif
+                        <th>IP ADDRESS</th>
+                        <th>CONDITION</th>
+                        <th>STATUS</th>
+                    @elseif($category == 'Phone')
+                        <th>DEVICE</th>
+                        <th>OS</th>
+                        <th>RAM / STORAGE</th>
+                        <th>COLOR</th>
+                        <th class="text-center">BATTERY</th>
+                        <th>CONDITION</th>
+                        <th>USER</th>
+                    @else
                     <th>MANUFACTURE</th>
                     <th>MODEL</th>
-                    
+                    @endif
+
                     @if(in_array($category, ['PC', 'Laptop', 'Dashboard']))
                         <th>USER</th>
-                    @elseif($category == 'Phone')
-                        <th>RAM / ROM</th>
-                        <th class="text-center">HEALTH</th>
-                        <th>USER</th>
+                    @elseif($category == 'Phone' || $isNetwork)
                     @else
                         <th>TYPE</th>
                         <th>SIZE</th>
@@ -108,9 +131,88 @@
             <tbody>
                 @forelse($items as $item)
                 <tr>
-                    <td class=" py-3">{{ $item->name }}</td>
+                    @php
+                        $itemIssues = $item->activeIssues->pluck('description')
+                            ->merge($item->components->flatMap(fn ($c) => $c->activeIssues->map(fn ($i) => $c->name.': '.$i->description)));
+                    @endphp
+                    <td class=" py-3 text-nowrap">
+                        {{ $item->name }}
+                        @if($itemIssues->count())
+                            <span class="badge bg-light-warning text-warning ms-1" data-bs-toggle="tooltip" title="{{ $itemIssues->implode(' • ') }}">
+                                <i class="bi bi-exclamation-triangle-fill"></i> {{ $itemIssues->count() }}
+                            </span>
+                        @endif
+                    </td>
+                    @if($isNetwork)
+                        <td class="py-3">
+                            <div class="fw-semibold">{{ trim(($item->manufacturer ?? '').' '.($item->model ?? '')) ?: '-' }}</div>
+                            @if($item->color)<small class="text-muted">{{ $item->color }}</small>@endif
+                        </td>
+                        <td class="py-3">
+                            <div>{{ $item->location ?? '-' }}</div>
+                            @if($item->area)<small class="text-muted">Serves: {{ $item->area }}</small>@endif
+                        </td>
+                        @if($category != 'Switch')
+                            <td class="py-3">
+                                @if($item->ssid)<i class="bi bi-wifi text-primary me-1"></i>{{ $item->ssid }}@else - @endif
+                            </td>
+                        @endif
+                        <td class="py-3 font-monospace small">{{ $item->ip_address ?? '-' }}</td>
+                        <td class="py-3">
+                            @php
+                                $conditionClass = match (strtolower($item->condition ?? '')) {
+                                    'sangat baik', 'baik' => 'bg-light-success text-success',
+                                    'ok' => 'bg-light-primary text-primary',
+                                    'cukup' => 'bg-light-warning text-warning',
+                                    default => 'bg-light-secondary text-secondary',
+                                };
+                            @endphp
+                            @if($item->condition)<span class="badge {{ $conditionClass }}">{{ $item->condition }}</span>@else - @endif
+                        </td>
+                        <td class="py-3 text-nowrap">
+                            @if(is_null($item->in_use)) -
+                            @elseif($item->in_use)<span class="badge bg-light-success text-success">In use</span>
+                            @else<span class="badge bg-light-secondary text-secondary">Not in use</span>@endif
+                        </td>
+                    @elseif($category == 'Phone')
+                        <td class="py-3" data-order="{{ $item->manufacturer }} {{ $item->model }}">
+                            <div class="fw-semibold">{{ trim(($item->manufacturer ?? '').' '.($item->model ?? '')) ?: '-' }}</div>
+                            @if($item->processor)<small class="text-muted">{{ $item->processor }}</small>@endif
+                        </td>
+                        <td class="py-3 text-nowrap">
+                            @if($item->os)
+                                <i class="bi {{ strtolower($item->os) == 'ios' ? 'bi-apple' : 'bi-android2 text-success' }} me-1"></i>{{ $item->os }}
+                                @if($item->os_version)<small class="text-muted">{{ $item->os_version }}</small>@endif
+                            @else - @endif
+                        </td>
+                        <td class="text-primary fw-semibold py-3 text-nowrap">{{ $item->ram ?? '-' }} / {{ $item->rom ?? '-' }}</td>
+                        <td class="py-3">{{ $item->color ?? '-' }}</td>
+                        <td class="text-center py-3" data-order="{{ $item->current_health ?? -1 }}">
+                            @if(!is_null($item->current_health))
+                                <span class="badge {{ $item->current_health < 80 ? 'bg-light-danger text-danger' : 'bg-light-success text-success' }} px-2 py-1">{{ $item->current_health }}%</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td class="py-3 text-nowrap">
+                            @if($item->condition)
+                                @php
+                                    $conditionClass = match (strtolower($item->condition)) {
+                                        'sangat baik', 'baik' => 'bg-light-success text-success',
+                                        'ok' => 'bg-light-primary text-primary',
+                                        'cukup' => 'bg-light-warning text-warning',
+                                        default => 'bg-light-secondary text-secondary',
+                                    };
+                                @endphp
+                                <span class="badge {{ $conditionClass }}">{{ $item->condition }}</span>
+                            @else - @endif
+                            @if($item->usability_tier)<small class="text-muted d-block">Tier {{ $item->usability_tier }}/10</small>@endif
+                        </td>
+                        <td class="py-3">{{ $item->user->name ?? 'STOCK' }}</td>
+                    @else
                     <td class="text-muted py-3">{{ $item->manufacturer ?? '-' }}</td>
                     <td class="py-3">{{ $item->model ?? '-' }}</td>
+                    @endif
 
                     @if(in_array($category, ['PC', 'Laptop', 'Dashboard']))
                         <td class="py-3">
@@ -118,25 +220,21 @@
                                 {{ $item->user->name ?? 'STOCK' }}
                             </span>
                         </td>
-                    @elseif($category == 'Phone')
-                        <td class="text-primary fw-semibold py-3">{{ $item->ram ?? '-' }} / {{ $item->rom ?? '-' }}</td>
-                        <td class="text-center py-3">
-                            <span class="badge {{ $item->current_health < 80 ? 'bg-light-danger text-danger' : 'bg-light-success text-success' }} px-2 py-1">
-                                {{ $item->current_health }}%
-                            </span>
-                        </td>
-                        <td class="py-3">
-                            <span class=" px-2 py-1">
-                                {{ $item->user->name ?? 'STOCK' }}
-                            </span>
-                        </td>
+                    @elseif($category == 'Phone' || $isNetwork)
                     @else
                         <td class="text-primary fw-semibold py-3">{{ $item->component_type ?? '-' }}</td>
                         <td class="text-muted py-3">{{ $item->size ?? '-' }}</td>
-                        <td class="text-center py-3">
-                            <span class="badge {{ $item->current_health < 50 ? 'bg-light-danger text-danger' : 'bg-light-success text-success' }} px-2 py-1">
-                                {{ $item->current_health }}%
-                            </span>
+                        <td class="text-center py-3" data-order="{{ $item->current_health ?? -1 }}">
+                            @if(!is_null($item->current_health))
+                                <span class="badge {{ $item->current_health < 50 ? 'bg-light-danger text-danger' : 'bg-light-success text-success' }} px-2 py-1">
+                                    {{ $item->current_health }}%
+                                </span>
+                            @elseif($item->condition)
+                                <span class="badge {{ strtolower($item->condition) === 'rusak' ? 'bg-light-danger text-danger' : 'bg-light-success text-success' }} px-2 py-1">{{ $item->condition }}</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                            @if($item->area)<small class="text-muted d-block mt-1">{{ $item->area }}</small>@endif
                         </td>
                         <td class="text-muted py-3">{{ $item->purchase_date?->format('d/m/Y') ?? '-' }}</td>
                     @endif
@@ -159,7 +257,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="{{ in_array($category, ['PC', 'Laptop', 'Dashboard']) ? 5 : ($category == 'Phone' ? 6 : 8) }}" class="text-center py-5 text-muted">No records found.</td></tr>
+                <tr><td colspan="{{ in_array($category, ['PC', 'Laptop', 'Dashboard']) ? 5 : ($category == 'Phone' ? 9 : ($isNetwork ? ($category == 'Switch' ? 7 : 8) : 8)) }}" class="text-center py-5 text-muted">No records found.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -246,6 +344,45 @@
                                 </div>
                             </div>
 
+                        @elseif($isNetwork)
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="" class="form-control" placeholder="e.g. NET-05-AP" required></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">IP Address</label><input type="text" name="ip_address" value="" class="form-control font-monospace" placeholder="192.168.1.1"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" value="" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" value="" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" value="" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Location</label><input type="text" name="location" value="" class="form-control" placeholder="e.g. Lt. 2, Meja IT"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Area / Division Served</label><input type="text" name="area" value="" class="form-control" placeholder="e.g. All, Design"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi SSID</label><input type="text" name="ssid" value="" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi Password</label><input type="text" name="ssid_password" value="" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Username</label><input type="text" name="admin_username" value="" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Password</label><input type="text" name="device_password" value="" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Status</label>
+                                    <select name="in_use" class="form-select">
+                                        <option value="1" >In use</option>
+                                        <option value="0" >Not in use</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Condition</label>
+                                    <select name="condition" class="form-select">
+                                        <option value="">-</option>
+                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option >{{ $cond }}</option>@endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Accessories</label><input type="text" name="accessories" value="" class="form-control" placeholder="Unit + Adaptor"></div>
+                            </div>
                         @elseif($category == 'Phone')
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" class="form-control" required></div>
@@ -267,7 +404,26 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">RAM</label><input type="text" name="ram" class="form-control"></div>
                                 <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">ROM</label><input type="text" name="rom" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" value="100" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Battery Health %</label><input type="number" name="current_health" min="0" max="100" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">OS</label>
+                                    <select name="os" class="form-select"><option value="">-</option><option>IOS</option><option>Android</option></select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">OS Version</label><input type="text" name="os_version" class="form-control" placeholder="e.g. 18.7.2"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Processor</label><input type="text" name="processor" class="form-control" placeholder="e.g. Apple A13 Bionic"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" class="form-control"></div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Condition</label>
+                                    <select name="condition" class="form-select"><option value="">-</option>@foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option>{{ $cond }}</option>@endforeach</select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Usability Tier (1-10)</label><input type="number" name="usability_tier" min="1" max="10" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12"><label class="form-label text-muted fw-bold small">Accessories (Kelengkapan)</label><input type="text" name="accessories" class="form-control" placeholder="e.g. Unit, Charger, Case"></div>
                             </div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" class="form-control"></div>
@@ -413,12 +569,51 @@
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">Rp.</span>
-                                        <input type="text" value="{{ number_format($item->price, 0) }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control">
+                                        <input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control">
                                         <input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
                                     </div>
                                 </div>
                             </div>
 
+                        @elseif($isNetwork)
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="{{ $item->name }}" class="form-control" placeholder="e.g. NET-05-AP" required></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">IP Address</label><input type="text" name="ip_address" value="{{ $item->ip_address }}" class="form-control font-monospace" placeholder="192.168.1.1"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" value="{{ $item->manufacturer }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" value="{{ $item->model }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" value="{{ $item->color }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Location</label><input type="text" name="location" value="{{ $item->location }}" class="form-control" placeholder="e.g. Lt. 2, Meja IT"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Area / Division Served</label><input type="text" name="area" value="{{ $item->area }}" class="form-control" placeholder="e.g. All, Design"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi SSID</label><input type="text" name="ssid" value="{{ $item->ssid }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi Password</label><input type="text" name="ssid_password" value="{{ $item->ssid_password }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Username</label><input type="text" name="admin_username" value="{{ $item->admin_username }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Password</label><input type="text" name="device_password" value="{{ $item->device_password }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Status</label>
+                                    <select name="in_use" class="form-select">
+                                        <option value="1" {{ $item->in_use !== false ? 'selected' : '' }}>In use</option>
+                                        <option value="0" {{ $item->in_use === false ? 'selected' : '' }}>Not in use</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Condition</label>
+                                    <select name="condition" class="form-select">
+                                        <option value="">-</option>
+                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option {{ $item->condition == $cond ? 'selected' : '' }}>{{ $cond }}</option>@endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Accessories</label><input type="text" name="accessories" value="{{ $item->accessories }}" class="form-control" placeholder="Unit + Adaptor"></div>
+                            </div>
                         @elseif($category == 'Phone')
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="{{ $item->name }}" class="form-control" required></div>
@@ -440,14 +635,39 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">RAM</label><input type="text" name="ram" value="{{ $item->ram }}" class="form-control"></div>
                                 <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">ROM</label><input type="text" name="rom" value="{{ $item->rom }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" value="{{ $item->current_health }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Battery Health %</label><input type="number" name="current_health" min="0" max="100" value="{{ $item->current_health }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">OS</label>
+                                    <select name="os" class="form-select">
+                                        <option value="">-</option>
+                                        @foreach(['IOS', 'Android'] as $osOption)<option {{ $item->os == $osOption ? 'selected' : '' }}>{{ $osOption }}</option>@endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">OS Version</label><input type="text" name="os_version" value="{{ $item->os_version }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Processor</label><input type="text" name="processor" value="{{ $item->processor }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" value="{{ $item->color }}" class="form-control"></div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Condition</label>
+                                    <select name="condition" class="form-select">
+                                        <option value="">-</option>
+                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option {{ $item->condition == $cond ? 'selected' : '' }}>{{ $cond }}</option>@endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Usability Tier (1-10)</label><input type="number" name="usability_tier" min="1" max="10" value="{{ $item->usability_tier }}" class="form-control"></div>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12"><label class="form-label text-muted fw-bold small">Accessories (Kelengkapan)</label><input type="text" name="accessories" value="{{ $item->accessories }}" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" value="{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}" class="form-control"></div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ number_format($item->price, 0) }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
+                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
                                     </div>
                                 </div>
                             </div>
@@ -491,7 +711,7 @@
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ number_format($item->price, 0) }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
+                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
                                     </div>
                                 </div>
                             </div>
@@ -548,6 +768,10 @@
     <script>
         $(document).ready(function() {
             // Initialize jQuery DataTables
+            if (window.bootstrap) {
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+            }
+
             $('#table1').DataTable({
                 "pageLength": 10,
                 "language": {

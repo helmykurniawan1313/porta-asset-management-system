@@ -22,6 +22,20 @@ class Device extends Model
         'size',
         'ram',
         'rom',
+        'os',
+        'os_version',
+        'processor',
+        'color',
+        'accessories',
+        'condition',
+        'usability_tier',
+        'location',
+        'area',
+        'ssid',
+        'ssid_password',
+        'admin_username',
+        'ip_address',
+        'in_use',
         'current_health',
         'user_id',
         'parent_id',
@@ -37,7 +51,15 @@ class Device extends Model
     protected $casts = [
         'purchase_date' => 'date',
         'price' => 'decimal:2',
+        'in_use' => 'boolean',
     ];
+
+    public const NETWORK_CATEGORIES = ['Router', 'Access Point', 'Switch'];
+
+    public function isNetwork(): bool
+    {
+        return in_array($this->category, self::NETWORK_CATEGORIES, true);
+    }
 
     /* ==========================================\
        RELATIONSHIPS
@@ -71,6 +93,16 @@ class Device extends Model
     public function softwareAllocations() 
     {
         return $this->morphMany(SubscriptionAllocation::class, 'assignable');
+    }
+
+    public function issues()
+    {
+        return $this->hasMany(DeviceIssue::class)->latest('reported_at')->latest('id');
+    }
+
+    public function activeIssues()
+    {
+        return $this->hasMany(DeviceIssue::class)->whereNull('resolved_at')->latest('reported_at')->latest('id');
     }
 
     public function healthRecords()

@@ -14,10 +14,11 @@ class SubscriptionController extends Controller
     public function index()
     {
         // Eager load account and allocations to avoid N+1 query issues
-        $subscriptions = Subscription::with(['account', 'allocations'])->orderBy('next_payment_date', 'asc')->get();
+        $subscriptions = Subscription::with(['account', 'allocations.assignable'])->orderBy('next_payment_date', 'asc')->get();
         $accounts = Account::orderBy('email')->get();
-        
-        return view('subscriptions.index', compact('subscriptions', 'accounts'));
+        $employees = User::orderBy('name')->get(['id', 'name']);
+
+        return view('subscriptions.index', compact('subscriptions', 'accounts', 'employees'));
     }
 
     public function show(Subscription $subscription)
@@ -32,35 +33,82 @@ class SubscriptionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'account_id'        => 'required|exists:accounts,id',
-            'plan'              => 'required|string|max:255',
-            'period'            => 'required|in:Monthly,Yearly',
-            'bill'              => 'required|numeric|min:0',
-            'currency'          => 'required|string|max:3',
-            'next_payment_date' => 'required|date',
-        ]);
+        $subscription = Subscription::create($this->validated($request));
+        $this->syncUsers($subscription, $request);
 
-        Subscription::create($request->all());
-        
         return back()->with('success', 'Subscription successfully tracked!');
     }
 
     public function update(Request $request, Subscription $subscription)
     {
-        // ADJUSTED: Replaced 'name' and 'url' with 'plan' and 'next_payment_date' to match the UI and store method
-        $request->validate([
-            'account_id'        => 'required|exists:accounts,id',
-            'plan'              => 'required|string|max:255',
-            'period'            => 'required|in:Monthly,Yearly',
-            'next_payment_date' => 'required|date',
-            'bill'              => 'required|numeric|min:0',
-            'currency'          => 'required|string|max:3',
-        ]);
-
-        $subscription->update($request->all());
+        $subscription->update($this->validated($request));
+        $this->syncUsers($subscription, $request);
 
         return back()->with('success', 'Subscription updated successfully!');
+    }
+
+    /**
+     * Make the license's employee allocations match the "Used by" picker exactly.
+     * Device allocations are managed separately on the detail page and left alone.
+     */
+    protected function syncUsers(Subscription $subscription, Request $request): void
+    {
+        $ids = collect($request->validate([
+            'user_ids'   => 'nullable|array',
+            'user_ids.*' => 'integer|exists:users,id',
+        ])['user_ids'] ?? [])->map(fn ($id) => (int) $id)->unique();
+
+        $userType = User::class;
+        $subscription->allocations()->where('assignable_type', $userType)
+            ->whereNotIn('assignable_id', $ids)->delete();
+
+        $existing = $subscription->allocations()->where('assignable_type', $userType)->pluck('assignable_id');
+        foreach ($ids->diff($existing) as $id) {
+            $subscription->allocations()->create(['assignable_type' => $userType, 'assignable_id' => $id]);
+        }
+    }
+
+    /**
+     * Mark the current period as paid: push the renewal date one month or one year forward.
+     */
+    public function renew(Subscription $subscription)
+    {
+        if (! $subscription->isRecurring()) {
+            return back()->withErrors(['period' => 'Only monthly or yearly licenses can be renewed.']);
+        }
+
+        $old = $subscription->next_payment_date;
+        $subscription->update([
+            'next_payment_date' => $subscription->nextRenewalDate(),
+            'status' => 'Active',
+        ]);
+
+        return back()->with('success', $subscription->label.' renewed: '
+            .($old ? $old->format('d M Y').' → ' : '').$subscription->next_payment_date->format('d M Y').'.');
+    }
+
+    protected function validated(Request $request): array
+    {
+        $data = $request->validate([
+            'account_id'        => 'required|exists:accounts,id',
+            'app'               => 'required|string|max:255',
+            'status'            => 'required|in:Active,Inactive',
+            'plan'              => 'nullable|string|max:255',
+            'period'            => 'required|in:'.implode(',', Subscription::PERIODS),
+            // Only recurring plans need a renewal date.
+            'next_payment_date' => 'nullable|required_if:period,Monthly,Yearly|date',
+            'bill'              => 'nullable|numeric|min:0',
+            'currency'          => 'nullable|string|max:3',
+            'password'          => 'nullable|string|max:255',
+            'login_with_google' => 'nullable|boolean',
+            'shared_with'       => 'nullable|string|max:255',
+            'division'          => 'nullable|string|max:255',
+            'card_info'         => 'nullable|string|max:20',
+            'notes'             => 'nullable|string',
+        ]);
+        $data['login_with_google'] = $request->boolean('login_with_google');
+
+        return $data;
     }
 
     public function destroy(Subscription $subscription)
@@ -74,7 +122,12 @@ class SubscriptionController extends Controller
         $request->validate(['assignable_target' => 'required|string']);
         list($type, $id) = explode(',', $request->assignable_target);
 
-        $subscription->allocations()->create([
+        if (! in_array($type, [User::class, Device::class], true)) {
+            return back()->withErrors(['assignable_target' => 'Invalid assignment target.']);
+        }
+
+        // Granting the same person/device twice would just duplicate the row.
+        $subscription->allocations()->firstOrCreate([
             'assignable_type' => $type,
             'assignable_id'   => $id,
         ]);

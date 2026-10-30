@@ -134,6 +134,12 @@ class User extends Authenticatable
         return $this->morphMany(SubscriptionAllocation::class, 'assignable');
     }
 
+    // Company login emails this employee uses (shared logins have several users).
+    public function accounts()
+    {
+        return $this->belongsToMany(Account::class)->withTimestamps()->orderBy('email');
+    }
+
     /**
      * True if this user belongs to the named department, or to a
      * sub-department of it (e.g. isInDepartment('Ops') matches someone in

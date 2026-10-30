@@ -35,4 +35,26 @@ return [
         ],
     ],
 
+    // Brand Health module (ported from Brand Matrix) — AI summary + Instagram
+    // OAuth config, namespaced separately from any future unrelated
+    // "ai_summary"/"instagram" keys this app might add.
+    'brand_health' => [
+        'ai_summary' => [
+            'provider' => env('BRAND_HEALTH_AI_SUMMARY_PROVIDER', 'groq'),
+        ],
+        'groq' => [
+            'key' => env('BRAND_HEALTH_GROQ_API_KEY'),
+            'model' => env('BRAND_HEALTH_GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        ],
+        'gemini' => [
+            'key' => env('BRAND_HEALTH_GEMINI_API_KEY'),
+            'model' => env('BRAND_HEALTH_GEMINI_MODEL', 'gemini-flash-lite-latest'),
+        ],
+        'instagram' => [
+            'app_id' => env('BRAND_HEALTH_IG_APP_ID'),
+            'app_secret' => env('BRAND_HEALTH_IG_APP_SECRET'),
+            'redirect_uri' => env('BRAND_HEALTH_IG_REDIRECT_URI'),
+        ],
+    ],
+
 ];

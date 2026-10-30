@@ -47,13 +47,18 @@ class AccountController extends Controller
     }
     public function show(Account $account)
 {
-    // Load all subscriptions tied to this account
-    $account->load('subscriptions');
+    $account->load([
+        'subscriptions' => fn ($q) => $q->orderByRaw("status = 'Inactive'")->orderBy('app')->orderBy('plan'),
+        'subscriptions.allocations.assignable',
+        'users' => fn ($q) => $q->with('department')->orderBy('name'),
+    ]);
 
-    // Calculate total monthly spend for this specific account
-    $totalMonthly = $account->subscriptions->where('period', 'Monthly')->sum('bill');
-    $totalYearly = $account->subscriptions->where('period', 'Yearly')->sum('bill');
+    // Monthly-equivalent spend of active recurring licenses, per currency (no FX conversion).
+    $monthlySpend = $account->subscriptions
+        ->filter(fn ($s) => $s->status === 'Active' && $s->isRecurring() && $s->bill)
+        ->groupBy('currency')
+        ->map(fn ($g) => $g->sum(fn ($s) => $s->period === 'Yearly' ? $s->bill / 12 : $s->bill));
 
-    return view('accounts.show', compact('account', 'totalMonthly', 'totalYearly'));
+    return view('accounts.show', compact('account', 'monthlySpend'));
 }
 }

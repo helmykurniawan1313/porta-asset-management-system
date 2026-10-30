@@ -256,11 +256,50 @@ class EmployeeController extends Controller
     {
         // Eager load everything needed for the profile, including software allocations
         $employee->load([
+            'accounts.subscriptions',
+            'accounts.users',
             'department',
             'devices.parentDevice',
             'softwareAllocations.subscription.account'
         ]);
 
-        return view('employees.show', compact('employee'));
+        $allAccounts = \App\Models\Account::orderBy('email')->pluck('email');
+
+        // Active licenses this person doesn't have yet, for the "Link software" picker.
+        $heldIds = $employee->softwareAllocations->pluck('subscription_id');
+        $availableLicenses = \App\Models\Subscription::with('account')
+            ->where('status', 'Active')
+            ->whereNotIn('id', $heldIds)
+            ->orderBy('app')->orderBy('plan')
+            ->get();
+
+        return view('employees.show', compact('employee', 'allAccounts', 'availableLicenses'));
+    }
+
+    /**
+     * Link a company login email to this employee. An email that isn't
+     * registered yet is created as a new account on the fly.
+     */
+    public function attachAccount(Request $request, User $employee)
+    {
+        $data = $request->validate([
+            'email'   => 'required|email|max:255',
+            'purpose' => 'nullable|string|max:255',
+        ]);
+
+        $account = \App\Models\Account::firstOrCreate(
+            ['email' => strtolower(trim($data['email']))],
+            ['purpose' => $data['purpose'] ?? null],
+        );
+        $employee->accounts()->syncWithoutDetaching([$account->id]);
+
+        return back()->with('success', "{$account->email} linked to {$employee->name}.");
+    }
+
+    public function detachAccount(User $employee, \App\Models\Account $account)
+    {
+        $employee->accounts()->detach($account->id);
+
+        return back()->with('success', "{$account->email} unlinked from {$employee->name}.");
     }
 }

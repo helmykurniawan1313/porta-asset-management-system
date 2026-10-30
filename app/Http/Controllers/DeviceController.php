@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\DeviceIssue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -24,7 +25,7 @@ class DeviceController extends Controller
         }
 
         // Fetch items with assigned employees
-        $items = $query->with('user')->latest()->get();
+        $items = $query->with(['user', 'activeIssues', 'components.activeIssues'])->latest()->get();
         $employees = User::orderBy('name')->get();
 
         return view('inventory.index', compact('items', 'category', 'employees'));
@@ -37,7 +38,8 @@ class DeviceController extends Controller
     {
         $device = Device::with([
             'user.department', 
-            'components', 
+            'components.activeIssues',
+            'issues',
             'parentDevice',
             'serviceHistories', 
             'activityLogs', 
@@ -47,10 +49,12 @@ class DeviceController extends Controller
         $employees = User::orderBy('name')->get();
 
         // Fetch unassigned components that can be attached to this device
-        $stockItems = Device::where('device_group', 'Peripheral')
+        $stockItems = Device::with('activeIssues')
+                            ->where('device_group', 'Peripheral')
                             ->whereNull('parent_id')
                             ->whereNull('user_id')
                             ->orderBy('category')
+                            ->orderBy('name')
                             ->get();
 
         return view('inventory.show', compact('device', 'employees', 'stockItems'));
@@ -71,6 +75,20 @@ class DeviceController extends Controller
             'user_id'    => 'nullable|exists:users,id',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
+            'os'             => 'nullable|string',
+            'os_version'     => 'nullable|string',
+            'processor'      => 'nullable|string',
+            'color'          => 'nullable|string',
+            'accessories'    => 'nullable|string',
+            'condition'      => 'nullable|string',
+            'usability_tier' => 'nullable|integer|min:1|max:10',
+            'location'       => 'nullable|string',
+            'area'           => 'nullable|string',
+            'ssid'           => 'nullable|string',
+            'ssid_password'  => 'nullable|string',
+            'admin_username' => 'nullable|string',
+            'ip_address'     => 'nullable|ip',
+            'in_use'         => 'nullable|boolean',
             'size'           => 'nullable|string',
             'component_type' => 'nullable|string',
             'current_health' => 'nullable|integer|min:0|max:100',
@@ -102,7 +120,11 @@ class DeviceController extends Controller
 
         // Determine if it is a main device or a peripheral component
         $mainDevices = ['PC', 'Laptop', 'Phone'];
-        $data['device_group'] = in_array($request->category ?? '', $mainDevices) ? 'Device' : 'Peripheral';
+        $data['device_group'] = match (true) {
+            in_array($request->category ?? '', $mainDevices) => 'Device',
+            in_array($request->category ?? '', Device::NETWORK_CATEGORIES) => 'Network',
+            default => 'Peripheral',
+        };
 
         unset($data['images']); // Remove array from data before insertion
         
@@ -132,6 +154,20 @@ class DeviceController extends Controller
             'user_id'    => 'nullable|exists:users,id',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
+            'os'             => 'nullable|string',
+            'os_version'     => 'nullable|string',
+            'processor'      => 'nullable|string',
+            'color'          => 'nullable|string',
+            'accessories'    => 'nullable|string',
+            'condition'      => 'nullable|string',
+            'usability_tier' => 'nullable|integer|min:1|max:10',
+            'location'       => 'nullable|string',
+            'area'           => 'nullable|string',
+            'ssid'           => 'nullable|string',
+            'ssid_password'  => 'nullable|string',
+            'admin_username' => 'nullable|string',
+            'ip_address'     => 'nullable|ip',
+            'in_use'         => 'nullable|boolean',
             'size'           => 'nullable|string',
             'component_type' => 'nullable|string',
             'current_health' => 'nullable|integer|min:0|max:100',
@@ -323,5 +359,50 @@ class DeviceController extends Controller
         ]);
 
         return back()->with('success', 'Component detached and returned to stock.');
+    }
+
+    /**
+     * Record a known fault / warning on an asset.
+     */
+    public function storeIssue(Request $request, Device $device)
+    {
+        $data = $request->validate([
+            'description' => 'required|string|max:255',
+            'reported_at' => 'required|date|before_or_equal:today',
+        ]);
+
+        $device->issues()->create($data);
+
+        $device->activityLogs()->create([
+            'action'      => 'Warning Added',
+            'description' => $data['description'],
+        ]);
+
+        return back()->with('success', 'Warning added.');
+    }
+
+    /**
+     * Mark a warning as fixed. It stays in the history as resolved.
+     */
+    public function resolveIssue(DeviceIssue $issue)
+    {
+        $issue->update(['resolved_at' => now()->toDateString()]);
+
+        $issue->device->activityLogs()->create([
+            'action'      => 'Warning Resolved',
+            'description' => $issue->description,
+        ]);
+
+        return back()->with('success', 'Warning marked as resolved.');
+    }
+
+    /**
+     * Remove a warning entered by mistake.
+     */
+    public function destroyIssue(DeviceIssue $issue)
+    {
+        $issue->delete();
+
+        return back()->with('success', 'Warning removed.');
     }
 }

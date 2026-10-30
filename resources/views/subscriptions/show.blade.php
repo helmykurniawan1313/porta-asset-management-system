@@ -1,64 +1,119 @@
 @extends('layouts.app')
 
-@section('title', 'License Control | ' . $subscription->plan)
+@section('title', 'License Control | ' . $subscription->label)
 @section('header_title', 'License Control')
 
 @section('styles')
     <style>
-        /* Modern Floating Header - No Gray Background */
         .table-assignments thead th {
             background-color: transparent !important;
-            border-bottom: 2px solid rgba(67, 94, 190, 0.15) !important; /* Brand Blue line */
-            color: #435ebe !important; /* Brand Blue text */
+            border-bottom: 2px solid rgba(67, 94, 190, 0.15) !important;
+            color: #435ebe !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             font-size: 0.7rem;
             letter-spacing: 1px;
             padding: 1.2rem 1rem !important;
         }
-        
-        .theme-dark .table-assignments thead th {
-            color: #8c9eff !important;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-        }
+        [data-bs-theme="dark"] .table-assignments thead th { color: #a5b4fc !important; border-bottom-color: rgba(255, 255, 255, 0.1) !important; }
 
-        /* Stats Icon Style to match Mazer Dashboard */
-        .license-icon {
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
+        .license-avatar {
+            width: 76px; height: 76px; border-radius: 22px; margin: 0 auto; display: grid; place-items: center;
+            font-size: 2rem; font-weight: 800; color: #fff; box-shadow: 0 10px 24px rgba(0, 0, 0, .12);
         }
+        .detail-list .item { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px dashed rgba(67, 94, 190, .12); }
+        .detail-list .item:last-child { border-bottom: 0; }
+        .detail-list .lbl { color: #8a94a6; font-size: .8rem; font-weight: 600; display: flex; align-items: center; gap: .45rem; white-space: nowrap; }
+        .detail-list .val { font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+        [data-bs-theme="dark"] .detail-list .item { border-bottom-color: rgba(255, 255, 255, .06); }
+        .pw-mask { letter-spacing: .15em; }
+
+        [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }
+        [data-bs-theme="dark"] .bg-light-success,   [data-bs-theme="dark"] .btn-light-success   { background-color: rgba(34, 197, 94, .16) !important;  color: #4ade80 !important; }
+        [data-bs-theme="dark"] .bg-light-warning,   [data-bs-theme="dark"] .btn-light-warning   { background-color: rgba(245, 158, 11, .16) !important; color: #fbbf24 !important; }
+        [data-bs-theme="dark"] .bg-light-danger,    [data-bs-theme="dark"] .btn-light-danger    { background-color: rgba(239, 68, 68, .16) !important;  color: #f87171 !important; }
+        [data-bs-theme="dark"] .bg-light-info,      [data-bs-theme="dark"] .btn-light-info      { background-color: rgba(56, 189, 248, .16) !important; color: #7dd3fc !important; }
+        [data-bs-theme="dark"] .bg-light-secondary, [data-bs-theme="dark"] .btn-light-secondary { background-color: rgba(148, 163, 184, .14) !important; color: #cbd5e1 !important; }
     </style>
 @endsection
 
 @section('content')
+@php
+    $s = $subscription;
+    $palette = ['#435ebe', '#e11d48', '#0891b2', '#7c3aed', '#059669', '#d97706', '#db2777', '#2563eb'];
+    $color = $palette[crc32(strtolower($s->app ?? '')) % count($palette)];
+    $days = $s->days_remaining;
+    $cost = $s->bill === null ? '—'
+        : trim(($s->currency ?? '').' '.number_format($s->bill, $s->currency === 'IDR' ? 0 : 2, $s->currency === 'IDR' ? ',' : '.', $s->currency === 'IDR' ? '.' : ','));
+@endphp
+
+<a href="{{ route('subscriptions.index') }}" class="btn btn-sm btn-light-primary px-3 fw-bold mb-4 d-inline-flex align-items-center gap-2 rounded-pill">
+    <i class="bi bi-arrow-left"></i> Back to licenses
+</a>
+
+@if(session('success'))
+    <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4"><i class="bi bi-check-circle me-2"></i> {{ session('success') }}</div>
+@endif
+
 <div class="row">
     <div class="col-12 col-xl-4 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center p-5 border-bottom">
-                <div class="license-icon bg-light-primary text-primary rounded-circle mb-3 shadow-sm">
-                    <span class="fs-1 fw-black">{{ $subscription->currency }}</span>
+            <div class="card-body text-center p-4 pt-5 border-bottom">
+                <div class="license-avatar mb-3" style="background: {{ $color }};">{{ strtoupper(substr($s->app ?? '?', 0, 1)) }}</div>
+                <h4 class="fw-bold mb-1">{{ $s->app ?? 'Untitled' }}</h4>
+                <p class="text-muted fw-semibold mb-3">{{ $s->plan ?? 'No plan' }}</p>
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <span class="badge {{ $s->status === 'Active' ? 'bg-light-success text-success' : 'bg-light-secondary text-secondary' }} px-3 py-2">{{ $s->status }}</span>
+                    @if($s->status === 'Active' && $days !== null)
+                        <span class="badge {{ $days < 0 ? 'bg-danger' : ($days <= 7 ? 'bg-light-danger text-danger' : ($days <= 30 ? 'bg-light-warning text-warning' : 'bg-light-primary text-primary')) }} px-3 py-2">
+                            {{ $days < 0 ? abs($days).' days overdue' : ($days === 0 ? 'Renews today' : 'Renews in '.$days.' days') }}
+                        </span>
+                    @endif
                 </div>
-                <h4 class="fw-bold text-uppercase tracking-tight mb-1">{{ $subscription->plan }}</h4>
-                <p class="text-muted small fw-bold text-uppercase mb-0">{{ $subscription->account->email }}</p>
             </div>
-            
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                    <span class="text-muted fw-bold small text-uppercase">Annual Cost</span>
-                    <span class="fw-bold fs-5">{{ number_format($subscription->bill, 2) }}</span>
+
+            <div class="card-body p-4 detail-list">
+                <div class="item">
+                    <span class="lbl"><i class="bi bi-envelope"></i> Login</span>
+                    <span class="val">
+                        @if($s->account)
+                            <a href="{{ route('accounts.show', $s->account) }}">{{ $s->account->email }}</a>
+                        @else — @endif
+                        @if($s->login_with_google)<br><span class="badge bg-light-info text-info mt-1"><i class="bi bi-google"></i> Login with Google</span>@endif
+                    </span>
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted fw-bold small text-uppercase">Next Renewal</span>
-                    <span class="fw-bold text-primary">{{ $subscription->next_payment_date->format('M d, Y') }}</span>
+                <div class="item">
+                    <span class="lbl"><i class="bi bi-key"></i> Password</span>
+                    <span class="val d-flex align-items-center justify-content-end gap-2">
+                        @if($s->password)
+                            <span id="pw-value" class="pw-mask" data-pw="{{ $s->password }}">••••••••</span>
+                            <button type="button" class="btn btn-sm btn-light-secondary rounded-pill px-2 py-0" onclick="togglePassword(this)" title="Show / hide"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-sm btn-light-secondary rounded-pill px-2 py-0" onclick="copyPassword(this)" title="Copy"><i class="bi bi-clipboard"></i></button>
+                        @else
+                            <span class="text-muted fw-normal">{{ $s->login_with_google ? 'Uses Google' : 'Not set' }}</span>
+                        @endif
+                    </span>
                 </div>
+                <div class="item"><span class="lbl"><i class="bi bi-cash-stack"></i> Cost</span><span class="val">{{ $cost }} <small class="text-muted fw-semibold">/ {{ $s->period }}</small></span></div>
+                <div class="item"><span class="lbl"><i class="bi bi-calendar-event"></i> Renewal</span><span class="val">{{ $s->renewal_label }}</span></div>
+                @if($s->status === 'Active' && $s->isRecurring())
+                    <form action="{{ route('subscriptions.renew', $s->id) }}" method="POST" class="py-3"
+                          onsubmit="return confirm('Mark as paid?\n\nRenewal: {{ $s->next_payment_date?->format('d M Y') ?? 'not set' }} → {{ $s->nextRenewalDate()->format('d M Y') }}')">
+                        @csrf
+                        <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold">
+                            <i class="bi bi-arrow-repeat me-1"></i> Paid — renew to {{ $s->nextRenewalDate()->format('d M Y') }}
+                        </button>
+                    </form>
+                @endif
+                <div class="item"><span class="lbl"><i class="bi bi-credit-card"></i> Card</span><span class="val">{{ $s->card_info ? '•••• '.$s->card_info : '—' }}</span></div>
+                <div class="item"><span class="lbl"><i class="bi bi-people"></i> Other users</span><span class="val">{{ $s->shared_with ?: '—' }}</span></div>
+                <div class="item"><span class="lbl"><i class="bi bi-diagram-3"></i> Division</span><span class="val">{{ $s->division ?: '—' }}</span></div>
+                @if($s->notes)
+                    <div class="item flex-column gap-1"><span class="lbl"><i class="bi bi-sticky"></i> Note</span><span class="fw-semibold">{{ $s->notes }}</span></div>
+                @endif
             </div>
         </div>
     </div>
-
     <div class="col-12 col-xl-8 mb-4">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-transparent border-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center py-4">
@@ -145,7 +200,7 @@
                             </optgroup>
                         </select>
                         <small class="text-muted d-block mt-2">
-                            The selected target will be granted a license seat for {{ $subscription->plan }}.
+                            The selected target will be granted a license seat for {{ $subscription->label }}.
                         </small>
                     </div>
                 </div>
@@ -157,4 +212,21 @@
         </div>
     </div>
 </div>
+@endsection
+@section('scripts')
+<script>
+    function togglePassword(btn) {
+        const el = document.getElementById('pw-value');
+        const hidden = el.classList.toggle('pw-mask');
+        el.textContent = hidden ? '••••••••' : el.dataset.pw;
+        btn.querySelector('i').className = hidden ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+    function copyPassword(btn) {
+        navigator.clipboard.writeText(document.getElementById('pw-value').dataset.pw).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'bi bi-check2';
+            setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+        });
+    }
+</script>
 @endsection
