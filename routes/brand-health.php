@@ -19,6 +19,7 @@ use App\BrandHealth\Http\Controllers\BrandSiteSettingController;
 use App\BrandHealth\Http\Controllers\BrandViewsTrackerController;
 use App\BrandHealth\Http\Controllers\BrandViewsTrendController;
 use App\BrandHealth\Http\Controllers\BrandWeeklyReportController;
+use App\BrandHealth\Http\Middleware\BrandMaintenanceMode;
 use App\BrandHealth\Models\BrandLegalPage;
 use Illuminate\Support\Facades\Route;
 
@@ -30,7 +31,7 @@ use Illuminate\Support\Facades\Route;
  * Users, departments and employees are it-inventory's own, so Brand Matrix's
  * screens for those aren't ported (only the employee drill-down JSON is).
  */
-Route::middleware('auth')->prefix('brand-health')->name('brand-health.')->group(function () {
+Route::middleware(['auth', BrandMaintenanceMode::class])->prefix('brand-health')->name('brand-health.')->group(function () {
     Route::get('/', [BrandDashboardController::class, 'index'])->name('dashboard');
 
     // --- Views Trend ---

@@ -30,7 +30,8 @@
     </div>
 </div>
 <script>
-(function () {
+// Runs after the layout's BH helpers (defined later in the page) are available.
+document.addEventListener('DOMContentLoaded', function () {
     const endpoint = @json($endpoint);
     const countKey = @json($countKey ?? 'cycle_count');
     const countNoun = @json($countNoun ?? 'cycle');
@@ -66,5 +67,5 @@
             btn.disabled = false;
         }
     });
-})();
+});
 </script>
