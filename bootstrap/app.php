@@ -20,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
     // Brand Health's artisan commands live outside app/Console/Commands.
     ->withCommands([__DIR__.'/../app/BrandHealth/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware): void {
+        // Production sits behind a reverse proxy that terminates HTTPS and forwards to the
+        // container on 127.0.0.1 only. Trusting its X-Forwarded-* headers makes route()/url()
+        // build https:// URLs; without it, in-page fetch() calls to http:// were blocked as
+        // mixed content ("Failed to fetch").
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

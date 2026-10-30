@@ -6,6 +6,7 @@ use App\ClientOps\Models\Client;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 
 
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
 public function boot()
 {
     Paginator::useBootstrapFive();
+
+    // When the site is served over HTTPS (APP_URL https://...), always build https links,
+    // even if a proxy header is missing; an http:// fetch from an https page is blocked.
+    if (str_starts_with((string) config('app.url'), 'https://')) {
+        URL::forceScheme('https');
+    }
 
     // "Account manager" is a department (job function), not a Spatie role —
     // access to Client Ops is granted by department membership or by an
