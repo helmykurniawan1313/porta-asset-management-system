@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Contracts\View\View as Response;
 
 class BrandWeeklyReportController extends Controller
@@ -83,7 +84,7 @@ class BrandWeeklyReportController extends Controller
 
     public function update(Request $request, BrandWeeklyReport $weeklyReport): RedirectResponse
     {
-        $weeklyReport->update($this->validated($request));
+        $weeklyReport->update($this->validated($request, $weeklyReport));
 
         return back();
     }
@@ -95,18 +96,28 @@ class BrandWeeklyReportController extends Controller
         return back();
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?BrandWeeklyReport $existing = null): array
     {
         $data = $request->validate([
             'account_id' => ['required', 'exists:brand_accounts,id'],
             'platform' => ['required', 'string', 'in:instagram,tiktok'],
-            'week_start_date' => ['required', 'date'],
+            'week_start_date' => [
+                'required',
+                'date',
+                // Mirrors the (account_id, platform, week_start_date) unique index.
+                Rule::unique('brand_weekly_reports', 'week_start_date')
+                    ->where('account_id', $request->input('account_id'))
+                    ->where('platform', $request->input('platform'))
+                    ->ignore($existing),
+            ],
             'follower_count' => ['nullable', 'integer', 'min:0'],
             'reach' => ['nullable', 'integer', 'min:0'],
             'views' => ['nullable', 'integer', 'min:0'],
             'profile_visits' => ['nullable', 'integer', 'min:0'],
             'link_clicks' => ['nullable', 'integer', 'min:0'],
             'engagement' => ['nullable', 'integer'],
+        ], [
+            'week_start_date.unique' => 'This account already has a weekly report for that platform and week.',
         ]);
 
         // week_end_date is always derived (Monday + 6 days) rather than taken

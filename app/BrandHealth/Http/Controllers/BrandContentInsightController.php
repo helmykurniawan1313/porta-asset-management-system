@@ -355,7 +355,7 @@ class BrandContentInsightController extends Controller
 
     public function update(Request $request, BrandContentInsight $contentInsight): RedirectResponse
     {
-        $contentInsight->update($this->validated($request));
+        $contentInsight->update($this->validated($request, $contentInsight));
 
         return back();
     }
@@ -367,7 +367,12 @@ class BrandContentInsightController extends Controller
         return back();
     }
 
-    private function validated(Request $request): array
+    /**
+     * Store upserts by account + cycle, so only an edit can collide with the
+     * (account_id, cycle_id) unique index: moving an insight onto a cycle that
+     * already has one is a validation error, not a database error.
+     */
+    private function validated(Request $request, ?BrandContentInsight $existing = null): array
     {
         return $request->validate([
             'account_id' => ['required', 'exists:brand_accounts,id'],
@@ -376,6 +381,11 @@ class BrandContentInsightController extends Controller
                 Rule::exists('brand_cycles', 'id')->where(
                     fn ($query) => $query->where('account_id', $request->input('account_id'))
                 ),
+                ...($existing ? [
+                    Rule::unique('brand_content_insights', 'cycle_id')
+                        ->where('account_id', $request->input('account_id'))
+                        ->ignore($existing),
+                ] : []),
             ],
             'viewers_posts' => ['required', 'integer', 'min:0'],
             'viewers_reels' => ['required', 'integer', 'min:0'],
@@ -383,6 +393,8 @@ class BrandContentInsightController extends Controller
             'interactions_posts' => ['required', 'integer', 'min:0'],
             'interactions_reels' => ['required', 'integer', 'min:0'],
             'interactions_story' => ['required', 'integer', 'min:0'],
+        ], [
+            'cycle_id.unique' => 'This account already has content insights for that cycle.',
         ]);
     }
 
