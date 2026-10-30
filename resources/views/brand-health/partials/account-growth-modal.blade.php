@@ -6,6 +6,8 @@
 <style>
     #account-growth-modal .modal-dialog { max-width: min(1140px, 95vw); }
     #account-growth-modal .modal-content { height: 95vh; }
+    /* Fixed-height panel: the body scrolls inside it instead of spilling past the bottom. */
+    #account-growth-modal .modal-body { overflow-y: auto; min-height: 0; }
     .ag-tabs { display: flex; gap: 1.5rem; margin-top: 1rem; margin-bottom: -1rem; }
     .ag-tabs button { border: 0; background: none; padding: 0 0 .65rem; font-weight: 600; color: var(--bh-ink-muted); border-bottom: 2px solid transparent; }
     .ag-tabs button.active { color: var(--bh-accent); border-bottom-color: var(--bh-accent); }
@@ -62,7 +64,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const DEFAULT_PROVIDER = @json(config('services.brand_health.ai_summary.provider', 'groq'));
     const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-    const palette = () => [css('--bh-accent') || '#435ebe', '#c2410c', '#7c3aed'];
+    // Accent, orange, green: distinct from each other now that the accent itself is indigo.
+    const palette = () => [css('--bh-accent') || '#4f46e5', '#ea580c', '#059669'];
     const nf = new Intl.NumberFormat('en-US');
     const count = (v) => nf.format(v ?? 0);
     const compact = (v) => (v === null || v === undefined ? '—' : new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v));
@@ -161,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dateRange = hasRange() && p && l ? `${fmtDate(p.cycle_start_date)} – ${fmtDate(l.cycle_end_date)}` : (l?.cycle_start_date ? `${fmtDate(l.cycle_start_date)}${l.cycle_end_date ? ' – ' + fmtDate(l.cycle_end_date) : ''}` : '—');
         const m = metrics().find((x) => x.key === S.metric) ?? metrics()[0];
         const changeLabel = m.change && a ? a[m.key] : null;
-        const ci = contentInsight(cycles, a);
+        const ci = contentInsight(cycles);
 
         body.innerHTML = `
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -232,25 +235,31 @@ document.addEventListener('DOMContentLoaded', function () {
         charts.scores = BH.chart(body.querySelector('[data-ag-canvas="scores"]'), chartConfigFor(chartConfigs().scores, cycles));
     }
 
-    function contentInsight(cycles, a) {
-        const from = cycles.at(0) ?? null, to = cycles.at(-1) ?? null;
-        const has = cycles.some((c) => c.content_insight);
+    function contentInsight(cycles) {
+        // Compare the first and last cycles in the window that actually have insights entered;
+        // the window's own ends often don't (insights start later than cycles).
+        const withInsight = cycles.filter((c) => c.content_insight);
+        const from = withInsight.at(0) ?? null, to = withInsight.at(-1) ?? null;
+        const has = withInsight.length > 0;
         const fi = from?.content_insight, ti = to?.content_insight;
         if (!fi || !ti) return { has, from, to, cards: [], scores: [] };
+        // A single insight cycle has nothing to compare against: show values, not a fake 0% change.
+        const change = (x, y) => (from === to ? null : pctChange(x, y));
         const groups = [
             { key: 'viewers', label: 'Viewers', fields: [['viewers_posts', 'Posts'], ['viewers_reels', 'Reels'], ['viewers_story', 'Story']] },
             { key: 'interactions', label: 'Interactions', fields: [['interactions_posts', 'Posts'], ['interactions_reels', 'Reels'], ['interactions_story', 'Story']] },
         ];
         const total = (ins, g) => g.fields.reduce((s, [k]) => s + (ins[k] ?? 0), 0);
-        const cards = groups.map((g) => ({ label: g.label, from: total(fi, g), to: total(ti, g), totalDelta: pctChange(total(fi, g), total(ti, g)),
-            lines: g.fields.map(([k, l]) => ({ label: l, from: fi[k] ?? 0, to: ti[k] ?? 0, delta: pctChange(fi[k], ti[k]) })) }));
+        const cards = groups.map((g) => ({ label: g.label, from: total(fi, g), to: total(ti, g), totalDelta: change(total(fi, g), total(ti, g)),
+            lines: g.fields.map(([k, l]) => ({ label: l, from: fi[k] ?? 0, to: ti[k] ?? 0, delta: change(fi[k], ti[k]) })) }));
         const weights = { posts: [['views', .5], ['interactions', .2], ['growth', .3]], reels: [['views', .5], ['interactions', .2], ['growth', .3]], story: [['views', .8], ['interactions', .2]] };
-        const growth = a?.followerChangeRate ?? null;
+        // Follower growth over the same two cycles the content figures compare (same end-to-end rule as analysis()).
+        const growth = change(from.end_follower, to.end_follower);
         const scores = Object.entries(weights).map(([type, comps]) => {
-            const values = { views: pctChange(fi[`viewers_${type}`], ti[`viewers_${type}`]), interactions: pctChange(fi[`interactions_${type}`], ti[`interactions_${type}`]), growth };
+            const values = { views: change(fi[`viewers_${type}`], ti[`viewers_${type}`]), interactions: change(fi[`interactions_${type}`], ti[`interactions_${type}`]), growth };
             const avail = comps.filter(([src]) => values[src] !== null), sum = avail.reduce((s, [, w]) => s + w, 0);
             return { label: { posts: 'Posts', reels: 'Reels', story: 'Story' }[type],
-                score: avail.length ? avail.reduce((s, [src, w]) => s + (values[src] * w) / sum, 0) : null,
+                score: avail.length && from !== to ? avail.reduce((s, [src, w]) => s + (values[src] * w) / sum, 0) : null,
                 components: comps.map(([source, weight]) => ({ source, weight, value: values[source] })) };
         });
         return { has, from, to, cards, scores };
