@@ -235,7 +235,12 @@
                             <a href="{{ route('inventory.show', $item->id) }}" class="btn btn-sm btn-light-primary rounded-pill px-3">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $item->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3">
+                            <button data-bs-toggle="modal" data-bs-target="#edit-modal" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit"
+                                data-action="{{ route('inventory.update', $item->id) }}"
+                                data-edit="{{ json_encode(['name' => $item->name, 'device_password' => $item->device_password, 'manufacturer' => $item->manufacturer, 'model' => $item->model, 'keyboard' => $item->keyboard, 'mouse' => $item->mouse, 'user_id' => $item->user_id, 'ip_address' => $item->ip_address, 'color' => $item->color, 'location' => $item->location, 'area' => $item->area, 'ssid' => $item->ssid, 'ssid_password' => $item->ssid_password, 'admin_username' => $item->admin_username, 'condition' => $item->condition, 'accessories' => $item->accessories, 'ram' => $item->ram, 'rom' => $item->rom, 'current_health' => $item->current_health, 'os' => $item->os, 'os_version' => $item->os_version, 'processor' => $item->processor, 'usability_tier' => $item->usability_tier, 'component_type' => $item->component_type, 'size' => $item->size, 'parent_id' => $item->parent_id, 'price' => $item->price,
+                                    'purchase_date' => $item->purchase_date?->format('Y-m-d'), 'in_use' => $item->in_use === false ? '0' : '1',
+                                    'images' => collect(['image1', 'image2', 'image3'])->filter(fn ($f) => $item->$f)->mapWithKeys(fn ($f) => [$f => asset('storage/' . $item->$f)]),
+                                ]) }}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete item?')">
@@ -259,6 +264,7 @@
 @endsection
 
 @section('modals')
+    @php $attachTargets = \App\Models\Device::whereIn('category', ['PC', 'Laptop', 'Phone'])->get(['id', 'name', 'category']); @endphp
     <div class="modal fade" id="add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-md-down">
             <form action="{{ route('inventory.store') }}" method="POST" enctype="multipart/form-data" class="w-100 h-100">
@@ -453,7 +459,7 @@
                                     <label class="form-label text-muted fw-bold small">Attach to Device</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Device::whereIn('category', ['PC', 'Laptop', 'Phone'])->get() as $targetDevice)
+                                        @foreach($attachTargets as $targetDevice)
                                             <option value="{{ $targetDevice->id }}">{{ $targetDevice->name }} ({{ $targetDevice->category }})</option>
                                         @endforeach
                                     </select>
@@ -491,10 +497,10 @@
         </div>
     </div>
 
-    @foreach($items as $item)
-    <div class="modal fade" id="edit-modal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
+    {{-- One edit modal for every row: filled from the clicked Edit button (see scripts). --}}
+    <div class="modal fade" id="edit-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-md-down">
-            <form action="{{ route('inventory.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="w-100 h-100">
+            <form method="POST" id="edit-form" enctype="multipart/form-data" class="w-100 h-100">
                 <div class="modal-content border-0 shadow-sm h-100 hr-modal">
                     <div class="modal-header border-0 pb-0">
                         <h5 class="modal-title fw-bold">Edit {{ $category }} Details</h5>
@@ -509,33 +515,33 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Name</label>
-                                    <input type="text" name="name" value="{{ $item->name }}" class="form-control" required>
+                                    <input type="text" name="name" class="form-control" required>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Device Password</label>
-                                    <input type="text" name="device_password" value="{{ $item->device_password }}" class="form-control">
+                                    <input type="text" name="device_password" class="form-control">
                                 </div>
                             </div>
 
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Manufacturer</label>
-                                    <input type="text" name="manufacturer" value="{{ $item->manufacturer }}" class="form-control">
+                                    <input type="text" name="manufacturer" class="form-control">
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Model</label>
-                                    <input type="text" name="model" value="{{ $item->model }}" class="form-control">
+                                    <input type="text" name="model" class="form-control">
                                 </div>
                             </div>
                             
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Keyboard</label>
-                                    <input type="text" name="keyboard" value="{{ $item->keyboard ?? '' }}" class="form-control" placeholder="e.g., Logitech K120">
+                                    <input type="text" name="keyboard" class="form-control" placeholder="e.g., Logitech K120">
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Mouse</label>
-                                    <input type="text" name="mouse" value="{{ $item->mouse ?? '' }}" class="form-control" placeholder="e.g., Logitech B100">
+                                    <input type="text" name="mouse" class="form-control" placeholder="e.g., Logitech B100">
                                 </div>
                             </div>
 
@@ -545,7 +551,7 @@
                                     <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
                                         @foreach($employees as $emp)
-                                            <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -554,126 +560,126 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Purchase Date</label>
-                                    <input type="date" name="purchase_date" value="{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}" class="form-control">
+                                    <input type="date" name="purchase_date" class="form-control">
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">Rp.</span>
-                                        <input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control">
-                                        <input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
+                                        <input type="text" oninput="formatPrice(this, 'edit_price_actual')" data-price-display class="form-control">
+                                        <input type="hidden" name="price" id="edit_price_actual">
                                     </div>
                                 </div>
                             </div>
 
                         @elseif($isNetwork)
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="{{ $item->name }}" class="form-control" placeholder="e.g. NET-05-AP" required></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">IP Address</label><input type="text" name="ip_address" value="{{ $item->ip_address }}" class="form-control font-monospace" placeholder="192.168.1.1"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" class="form-control" placeholder="e.g. NET-05-AP" required></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">IP Address</label><input type="text" name="ip_address" class="form-control font-monospace" placeholder="192.168.1.1"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" value="{{ $item->manufacturer }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" value="{{ $item->model }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" value="{{ $item->color }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Location</label><input type="text" name="location" value="{{ $item->location }}" class="form-control" placeholder="e.g. Lt. 2, Meja IT"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Area / Division Served</label><input type="text" name="area" value="{{ $item->area }}" class="form-control" placeholder="e.g. All, Design"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Location</label><input type="text" name="location" class="form-control" placeholder="e.g. Lt. 2, Meja IT"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Area / Division Served</label><input type="text" name="area" class="form-control" placeholder="e.g. All, Design"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi SSID</label><input type="text" name="ssid" value="{{ $item->ssid }}" class="form-control"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi Password</label><input type="text" name="ssid_password" value="{{ $item->ssid_password }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi SSID</label><input type="text" name="ssid" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Wi-Fi Password</label><input type="text" name="ssid_password" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Username</label><input type="text" name="admin_username" value="{{ $item->admin_username }}" class="form-control"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Password</label><input type="text" name="device_password" value="{{ $item->device_password }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Username</label><input type="text" name="admin_username" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Admin Password</label><input type="text" name="device_password" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted fw-bold small">Status</label>
                                     <select name="in_use" class="form-select">
-                                        <option value="1" {{ $item->in_use !== false ? 'selected' : '' }}>In use</option>
-                                        <option value="0" {{ $item->in_use === false ? 'selected' : '' }}>Not in use</option>
+                                        <option value="1">In use</option>
+                                        <option value="0">Not in use</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted fw-bold small">Condition</label>
                                     <select name="condition" class="form-select">
                                         <option value="">-</option>
-                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option {{ $item->condition == $cond ? 'selected' : '' }}>{{ $cond }}</option>@endforeach
+                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option>{{ $cond }}</option>@endforeach
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Accessories</label><input type="text" name="accessories" value="{{ $item->accessories }}" class="form-control" placeholder="Unit + Adaptor"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Accessories</label><input type="text" name="accessories" class="form-control" placeholder="Unit + Adaptor"></div>
                             </div>
                         @elseif($category == 'Phone')
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="{{ $item->name }}" class="form-control" required></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Device Password</label><input type="text" name="device_password" value="{{ $item->device_password }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" class="form-control" required></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Device Password</label><input type="text" name="device_password" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" value="{{ $item->manufacturer }}" class="form-control"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" value="{{ $item->model }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
                                     <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach($employees as $emp) <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option> @endforeach
+                                        @foreach($employees as $emp) <option value="{{ $emp->id }}">{{ $emp->name }}</option> @endforeach
                                     </select>
                                 </div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">RAM</label><input type="text" name="ram" value="{{ $item->ram }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">ROM</label><input type="text" name="rom" value="{{ $item->rom }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Battery Health %</label><input type="number" name="current_health" min="0" max="100" value="{{ $item->current_health }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">RAM</label><input type="text" name="ram" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">ROM</label><input type="text" name="rom" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Battery Health %</label><input type="number" name="current_health" min="0" max="100" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted fw-bold small">OS</label>
                                     <select name="os" class="form-select">
                                         <option value="">-</option>
-                                        @foreach(['IOS', 'Android'] as $osOption)<option {{ $item->os == $osOption ? 'selected' : '' }}>{{ $osOption }}</option>@endforeach
+                                        @foreach(['IOS', 'Android'] as $osOption)<option>{{ $osOption }}</option>@endforeach
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">OS Version</label><input type="text" name="os_version" value="{{ $item->os_version }}" class="form-control"></div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Processor</label><input type="text" name="processor" value="{{ $item->processor }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">OS Version</label><input type="text" name="os_version" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Processor</label><input type="text" name="processor" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" value="{{ $item->color }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Color</label><input type="text" name="color" class="form-control"></div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted fw-bold small">Condition</label>
                                     <select name="condition" class="form-select">
                                         <option value="">-</option>
-                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option {{ $item->condition == $cond ? 'selected' : '' }}>{{ $cond }}</option>@endforeach
+                                        @foreach(['Sangat Baik', 'Baik', 'OK', 'Cukup', 'Tidak diketahui'] as $cond)<option>{{ $cond }}</option>@endforeach
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Usability Tier (1-10)</label><input type="number" name="usability_tier" min="1" max="10" value="{{ $item->usability_tier }}" class="form-control"></div>
+                                <div class="col-12 col-md-4"><label class="form-label text-muted fw-bold small">Usability Tier (1-10)</label><input type="number" name="usability_tier" min="1" max="10" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12"><label class="form-label text-muted fw-bold small">Accessories (Kelengkapan)</label><input type="text" name="accessories" value="{{ $item->accessories }}" class="form-control"></div>
+                                <div class="col-12"><label class="form-label text-muted fw-bold small">Accessories (Kelengkapan)</label><input type="text" name="accessories" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" value="{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" class="form-control"></div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
+                                        <span class="input-group-text bg-light">Rp.</span><input type="text" oninput="formatPrice(this, 'edit_price_actual')" data-price-display class="form-control"><input type="hidden" name="price" id="edit_price_actual">
                                     </div>
                                 </div>
                             </div>
                         @else
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" value="{{ $item->name }}" class="form-control" required></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Component Type</label><input type="text" name="component_type" value="{{ $item->component_type }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Asset Name</label><input type="text" name="name" class="form-control" required></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Component Type</label><input type="text" name="component_type" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" value="{{ $item->manufacturer }}" class="form-control"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" value="{{ $item->model }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Manufacturer</label><input type="text" name="manufacturer" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Model</label><input type="text" name="model" class="form-control"></div>
                             </div>
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Size / Specs</label><input type="text" name="size" value="{{ $item->size }}" class="form-control"></div>
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" value="{{ $item->current_health }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Size / Specs</label><input type="text" name="size" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Health %</label><input type="number" name="current_health" class="form-control"></div>
                             </div>
                             
                             <div class="row g-3 mb-4">
@@ -682,7 +688,7 @@
                                     <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
                                         @foreach($employees as $emp)
-                                            <option value="{{ $emp->id }}" {{ $item->user_id == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -690,47 +696,33 @@
                                     <label class="form-label text-muted fw-bold small">Attach to Device</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
-                                        @foreach(\App\Models\Device::whereIn('category', ['PC', 'Laptop', 'Phone'])->get() as $targetDevice)
-                                            <option value="{{ $targetDevice->id }}" {{ $item->parent_id == $targetDevice->id ? 'selected' : '' }}>{{ $targetDevice->name }} ({{ $targetDevice->category }})</option>
+                                        @foreach($attachTargets as $targetDevice)
+                                            <option value="{{ $targetDevice->id }}">{{ $targetDevice->name }} ({{ $targetDevice->category }})</option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
 
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" value="{{ $item->purchase_date ? $item->purchase_date->format('Y-m-d') : '' }}" class="form-control"></div>
+                                <div class="col-12 col-md-6"><label class="form-label text-muted fw-bold small">Purchase Date</label><input type="date" name="purchase_date" class="form-control"></div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label text-muted fw-bold small">Asset Value</label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light">Rp.</span><input type="text" value="{{ $item->price ? number_format($item->price, 0) : '' }}" oninput="formatPrice(this, 'edit_price_actual_{{ $item->id }}')" class="form-control"><input type="hidden" name="price" id="edit_price_actual_{{ $item->id }}" value="{{ $item->price }}">
+                                        <span class="input-group-text bg-light">Rp.</span><input type="text" oninput="formatPrice(this, 'edit_price_actual')" data-price-display class="form-control"><input type="hidden" name="price" id="edit_price_actual">
                                     </div>
                                 </div>
                             </div>
                         @endif
 
-                        @if($item->image1 || $item->image2 || $item->image3)
-                        <div class="row g-3 border-top pt-3 mt-1 mb-3">
+                        <div class="row g-3 border-top pt-3 mt-1 mb-3 d-none" data-edit-gallery>
                             <div class="col-12">
-                                <label class="form-label text-muted fw-bold small">Current Gallery (Click X to remove)</label>
-                                <div class="d-flex gap-3 mt-2">
-                                    @foreach(['image1', 'image2', 'image3'] as $imgField)
-                                        @if($item->$imgField)
-                                            <div class="position-relative" id="preview-{{ $item->id }}-{{ $imgField }}">
-                                                <img src="{{ asset('storage/' . $item->$imgField) }}" class="rounded shadow-sm border" style="width: 75px; height: 75px; object-fit: cover;">
-                                                
-                                                <button type="button" onclick="markImageForDeletion('{{ $item->id }}', '{{ $imgField }}')" class="btn btn-danger position-absolute top-0 start-100 translate-middle rounded-circle shadow-sm p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; margin-left: -5px; margin-top: 5px;">
-                                                    <i class="bi bi-x" style="font-size: 14px; line-height: 1;"></i>
-                                                </button>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                                <div id="hidden-removals-{{ $item->id }}"></div>
+                                <label class="form-label">Current Gallery (Click X to remove)</label>
+                                <div class="d-flex gap-3 mt-2" data-edit-gallery-items></div>
+                                <div id="hidden-removals-edit"></div>
                             </div>
                         </div>
-                        @endif
 
-                        <div class="row g-3 @if(!$item->image1 && !$item->image2 && !$item->image3) border-top pt-3 mt-1 @endif">
+                        <div class="row g-3 border-top pt-3 mt-1">
                             <div class="col-12">
                                 <label class="form-label text-muted fw-bold small">Upload New Images (Max 3 - Auto-optimized to WEBP)</label>
                                 <input type="file" name="images[]" multiple accept="image/*" class="form-control" onchange="validateFiles(this)">
@@ -748,7 +740,6 @@
             </form>
         </div>
     </div>
-    @endforeach
 @endsection
 
 @section('scripts')
@@ -757,6 +748,32 @@
     <script src="{{ asset('assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
     
     <script>
+        // Shared edit modal: load the clicked device's values, price and gallery, and point the form at it.
+        document.getElementById('edit-modal').addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            if (!btn?.dataset.edit) return;
+            const data = JSON.parse(btn.dataset.edit);
+            const images = data.images || {};
+            delete data.images;
+            const form = document.getElementById('edit-form');
+            window.fillForm(form, data, btn.dataset.action);
+            form.querySelector('[name="images[]"]').value = '';
+
+            const display = form.querySelector('[data-price-display]');
+            if (display) display.value = data.price ? Math.round(Number(data.price)).toLocaleString('en-US') : '';
+
+            const gallery = form.querySelector('[data-edit-gallery]');
+            document.getElementById('hidden-removals-edit').innerHTML = '';
+            gallery.querySelector('[data-edit-gallery-items]').innerHTML = Object.entries(images).map(([field, url]) => `
+                <div class="position-relative" id="preview-edit-${field}">
+                    <img src="${url}" class="rounded shadow-sm border" style="width: 75px; height: 75px; object-fit: cover;" alt="">
+                    <button type="button" onclick="markImageForDeletion('edit', '${field}')" class="btn btn-danger position-absolute top-0 start-100 translate-middle rounded-circle shadow-sm p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; margin-left: -5px; margin-top: 5px;">
+                        <i class="bi bi-x" style="font-size: 14px; line-height: 1;"></i>
+                    </button>
+                </div>`).join('');
+            gallery.classList.toggle('d-none', Object.keys(images).length === 0);
+        });
+
         $(document).ready(function() {
             // Initialize jQuery DataTables
             if (window.bootstrap) {

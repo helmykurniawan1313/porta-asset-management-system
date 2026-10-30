@@ -1,7 +1,7 @@
 @php
     /** @var \App\Models\Subscription|null $sub */
     $sub = $sub ?? null;
-    $uid = $sub?->id ?? 'new';
+    $uid = $uid ?? $sub?->id ?? 'new';
 @endphp
 <div class="row g-3">
     <div class="col-md-6">

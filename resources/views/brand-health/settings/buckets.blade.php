@@ -182,50 +182,19 @@
                 </div>
 
                 <div id="sbm-{{ $metric }}">
+                {{-- Editors are built on first open from this data (see scripts): rendering every group's
+                     editor up front made the page ~900KB. --}}
                 @foreach($groups as $g)
-                    <div class="collapse" id="{{ $cellId($g) }}" data-bs-parent="#sbm-{{ $metric }}">
-                        <div class="border rounded-3 p-3 mt-2" style="border-color: var(--bh-border) !important">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="fw-semibold">{{ $metricTitles[$metric] }} — {{ $g['label'] }}</div>
-                                <button type="button" class="btn-close small" data-bs-toggle="collapse" data-bs-target="#{{ $cellId($g) }}" aria-label="Close"></button>
-                            </div>
-                            <table class="table table-sm sb-table mb-0">
-                                <thead><tr><th class="small bh-faint">Min rate (≥)</th><th class="small bh-faint">Score</th><th class="small bh-faint">Color</th><th></th></tr></thead>
-                                <tbody>
-                                    @foreach($g['buckets'] as $rank => $b)
-                                        <tr data-sb-row>
-                                            <td>
-                                                <form method="POST" action="{{ route('brand-health.score-buckets.update', $b['id']) }}" id="sbf-{{ $b['id'] }}" data-keep-place>@csrf @method('PUT')</form>
-                                                <input type="number" step="any" name="min_rate" max="999999.99" form="sbf-{{ $b['id'] }}" class="form-control form-control-sm" value="{{ $plain($b['min_rate']) }}" placeholder="No minimum" {{ $dis }}>
-                                            </td>
-                                            <td><input type="number" step="any" min="0" name="score" max="999.99" form="sbf-{{ $b['id'] }}" class="form-control form-control-sm" value="{{ $plain($b['score']) }}" required {{ $dis }}></td>
-                                            <td>@include('brand-health.settings._color-picker', ['b' => $b, 'formId' => 'sbf-'.$b['id'], 'rank' => $rank])</td>
-                                            <td class="text-end text-nowrap">
-                                                @if($canEdit)
-                                                    <button type="submit" form="sbf-{{ $b['id'] }}" class="btn btn-sm btn-primary">Save</button>
-                                                    <form method="POST" action="{{ route('brand-health.score-buckets.destroy', $b['id']) }}" class="d-inline" data-keep-place onsubmit="return confirmDelete(this, 'This score tier will be removed. Existing cycles keep their scores until you recalculate.', 'Delete this tier?')">@csrf @method('DELETE')<button class="btn btn-sm btn-light-danger" title="Delete"><i class="bi bi-trash"></i></button></form>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    @if($canEdit)
-                                        <tr>
-                                            <td>
-                                                <form method="POST" action="{{ route('brand-health.score-buckets.store') }}" id="sbn-{{ $cellId($g) }}" data-keep-place>@csrf
-                                                    <input type="hidden" name="metric" value="{{ $metric }}"><input type="hidden" name="platform" value="{{ $g['platform'] }}"><input type="hidden" name="tier" value="{{ $g['tier'] }}">
-                                                </form>
-                                                <input type="number" step="any" name="min_rate" max="999999.99" form="sbn-{{ $cellId($g) }}" class="form-control form-control-sm" placeholder="New min rate">
-                                            </td>
-                                            <td><input type="number" step="any" min="0" name="score" max="999.99" form="sbn-{{ $cellId($g) }}" class="form-control form-control-sm" placeholder="Score" required></td>
-                                            <td></td>
-                                            <td class="text-end"><button type="submit" form="sbn-{{ $cellId($g) }}" class="btn btn-sm btn-light-secondary"><i class="bi bi-plus-lg"></i> Add tier</button></td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                            @if($metric === 'growth')<small class="bh-faint">Growth thresholds must be 0% or higher, and the floor tier (no minimum) must score 0.</small>@endif
-                        </div>
-                    </div>
+                    <div class="collapse" id="{{ $cellId($g) }}" data-bs-parent="#sbm-{{ $metric }}"
+                         data-sb-editor="{{ json_encode([
+                             'title' => $metricTitles[$metric].' — '.$g['label'],
+                             'metric' => $metric, 'platform' => $g['platform'], 'tier' => $g['tier'], 'cell' => $cellId($g),
+                             'buckets' => collect($g['buckets'])->values()->map(fn ($b, $rank) => [
+                                 'id' => $b['id'], 'min_rate' => $plain($b['min_rate']), 'score' => $plain($b['score']),
+                                 'color' => $b['color'] ?? '', 'bg' => $b['custom_color_bg'] ?? '#e8f5e9', 'ink' => $b['custom_color_ink'] ?? '#1b5e20',
+                                 'auto' => $tones[min($rank, 4)],
+                             ]),
+                         ]) }}"></div>
                 @endforeach
                 </div>
             </div>
@@ -323,10 +292,76 @@
     // Every save is a normal form post that redirects back here: remember the tab,
     // the open group editor and the scroll position so the page reopens in place.
     const KEY = 'bh-buckets-place';
-    document.querySelectorAll('form[data-keep-place]').forEach((form) => form.addEventListener('submit', () => {
+    document.addEventListener('submit', (e) => {
+        if (!e.target.matches('form[data-keep-place]')) return;
         const open = document.querySelector('.collapse.show[id^="sbc-"]');
         try { sessionStorage.setItem(KEY, JSON.stringify({ tab: document.querySelector('#sb-tabs .nav-link.active')?.dataset.bsTarget, open: open?.id, y: window.scrollY })); } catch {}
-    }));
+    });
+
+    // ---- Score-tier group editors, built the first time a cell is opened ----
+    const CAN_EDIT = @json($canEdit);
+    const CSRF = @json(csrf_token());
+    const URL_STORE = @json(route('brand-health.score-buckets.store'));
+    const URL_ITEM = (id) => @json(route('brand-health.score-buckets.update', '__ID__')).replace('__ID__', id);
+    const COLORS = [['', 'Auto'], ['sip', 'SIP'], ['bagus', 'Bagus'], ['cukup', 'Cukup'], ['kurang', 'Kurang'], ['parah', 'Parah'], ['custom', 'Custom']];
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dis = CAN_EDIT ? '' : 'disabled';
+    const hidden = (name, value) => `<input type="hidden" name="${name}" value="${esc(value)}">`;
+
+    function pickerHtml(b, formId) {
+        return `<div class="d-flex align-items-center gap-1" data-color-picker data-auto="${b.auto}">
+            <span class="sb-swatch"></span>
+            <select name="color" form="${formId}" class="form-select form-select-sm" style="width: 7rem" data-no-search ${dis}>
+                ${COLORS.map(([v, l]) => `<option value="${v}" ${b.color === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+            <span class="d-flex gap-1 d-none" data-custom>
+                <input type="color" name="custom_color_bg" form="${formId}" value="${esc(b.bg)}" class="form-control form-control-sm form-control-color p-0" title="Background">
+                <input type="color" name="custom_color_ink" form="${formId}" value="${esc(b.ink)}" class="form-control form-control-sm form-control-color p-0" title="Text">
+            </span>
+        </div>`;
+    }
+
+    function editorHtml(g) {
+        const rows = g.buckets.map((b) => {
+            const f = `sbf-${b.id}`;
+            return `<tr data-sb-row>
+                <td><form method="POST" action="${URL_ITEM(b.id)}" id="${f}" data-keep-place>${hidden('_token', CSRF)}${hidden('_method', 'PUT')}</form>
+                    <input type="number" step="any" name="min_rate" max="999999.99" form="${f}" class="form-control form-control-sm" value="${esc(b.min_rate)}" placeholder="No minimum" ${dis}></td>
+                <td><input type="number" step="any" min="0" name="score" max="999.99" form="${f}" class="form-control form-control-sm" value="${esc(b.score)}" required ${dis}></td>
+                <td>${pickerHtml(b, f)}</td>
+                <td class="text-end text-nowrap">${CAN_EDIT ? `
+                    <button type="submit" form="${f}" class="btn btn-sm btn-primary">Save</button>
+                    <form method="POST" action="${URL_ITEM(b.id)}" class="d-inline" data-keep-place onsubmit="return confirmDelete(this, 'This score tier will be removed. Existing cycles keep their scores until you recalculate.', 'Delete this tier?')">${hidden('_token', CSRF)}${hidden('_method', 'DELETE')}<button class="btn btn-sm btn-light-danger" title="Delete"><i class="bi bi-trash"></i></button></form>` : ''}</td>
+            </tr>`;
+        }).join('');
+        const n = `sbn-${g.cell}`;
+        const addRow = CAN_EDIT ? `<tr>
+            <td><form method="POST" action="${URL_STORE}" id="${n}" data-keep-place>${hidden('_token', CSRF)}${hidden('metric', g.metric)}${hidden('platform', g.platform ?? '')}${hidden('tier', g.tier ?? '')}</form>
+                <input type="number" step="any" name="min_rate" max="999999.99" form="${n}" class="form-control form-control-sm" placeholder="New min rate"></td>
+            <td><input type="number" step="any" min="0" name="score" max="999.99" form="${n}" class="form-control form-control-sm" placeholder="Score" required></td>
+            <td></td>
+            <td class="text-end"><button type="submit" form="${n}" class="btn btn-sm btn-light-secondary"><i class="bi bi-plus-lg"></i> Add tier</button></td>
+        </tr>` : '';
+        return `<div class="border rounded-3 p-3 mt-2" style="border-color: var(--bh-border) !important">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-semibold">${esc(g.title)}</div>
+                <button type="button" class="btn-close small" data-bs-toggle="collapse" data-bs-target="#${g.cell}" aria-label="Close"></button>
+            </div>
+            <table class="table table-sm sb-table mb-0">
+                <thead><tr><th class="small bh-faint">Min rate (≥)</th><th class="small bh-faint">Score</th><th class="small bh-faint">Color</th><th></th></tr></thead>
+                <tbody>${rows}${addRow}</tbody>
+            </table>
+            ${g.metric === 'growth' ? '<small class="bh-faint">Growth thresholds must be 0% or higher, and the floor tier (no minimum) must score 0.</small>' : ''}
+        </div>`;
+    }
+
+    function buildEditor(el) {
+        if (el.dataset.built) return;
+        el.innerHTML = editorHtml(JSON.parse(el.dataset.sbEditor));
+        el.dataset.built = '1';
+        initRows(el);
+    }
+    document.addEventListener('show.bs.collapse', (e) => { if (e.target.dataset.sbEditor) buildEditor(e.target); });
     let place = null;
     try { place = JSON.parse(sessionStorage.getItem(KEY) || 'null'); sessionStorage.removeItem(KEY); } catch {}
     const tab = place?.tab ?? (location.hash ? '#sb-' + location.hash.slice(1) : null);
@@ -334,16 +369,20 @@
     if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
     if (place?.open && document.getElementById(place.open)) {
         const el = document.getElementById(place.open);
+        if (el.dataset.sbEditor) buildEditor(el);
         el.classList.add('show');
         document.querySelector(`[data-bs-target="#${place.open}"].sb-cell`)?.setAttribute('aria-expanded', 'true');
     }
     if (place?.y) requestAnimationFrame(() => window.scrollTo(0, place.y));
 
-    // Unsaved-change marker on edited rows.
-    document.querySelectorAll('[data-sb-row]').forEach((row) => row.addEventListener('input', () => row.classList.add('sb-dirty')));
+    // Unsaved-change markers and colour pickers, for the page and for each editor once built.
+    function initRows(root) {
+        root.querySelectorAll('[data-sb-row]').forEach((row) => row.addEventListener('input', () => row.classList.add('sb-dirty')));
+        root.querySelectorAll('[data-color-picker]').forEach(initPicker);
+    }
 
     // Colour pickers: show the custom colour inputs only for "custom", and preview the swatch.
-    document.querySelectorAll('[data-color-picker]').forEach((wrap) => {
+    function initPicker(wrap) {
         const sel = wrap.querySelector('select'), custom = wrap.querySelector('[data-custom]'), sw = wrap.querySelector('.sb-swatch');
         const [bg, ink] = custom.querySelectorAll('input');
         const sync = () => {
@@ -354,7 +393,8 @@
         };
         sel.addEventListener('change', sync); bg.addEventListener('input', sync); ink.addEventListener('input', sync);
         sync();
-    });
+    }
+    initRows(document);
 
     // Formula weights: live normalized share per component.
     document.querySelectorAll('form[data-weights]').forEach((form) => {

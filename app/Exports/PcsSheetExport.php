@@ -21,7 +21,7 @@ class PcsSheetExport implements FromCollection, WithHeadings, WithMapping, WithT
         $this->peripherals = $peripherals;
         
         // 1. Fetch the PCs IMMEDIATELY so we can count their components before Excel asks for the headers
-        $this->pcs = Device::whereIn('category', ['PC', 'Laptop'])->with(['components', 'employee'])->get();
+        $this->pcs = Device::whereIn('category', ['PC', 'Laptop'])->with(['components', 'user'])->get();
         
         $catArray = [];
 
@@ -102,7 +102,7 @@ class PcsSheetExport implements FromCollection, WithHeadings, WithMapping, WithT
     {
         $row = [
             $pc->name,
-            $pc->employee?->name ?? 'STOCK'
+            $pc->user?->name ?? 'STOCK'
         ];
 
         foreach ($this->categories as $cat) {

@@ -87,7 +87,9 @@
                                         <a href="{{ route('employees.show', $emp->id) }}" class="btn btn-sm btn-light-primary rounded-pill px-3" title="View Profile">
                                             <i class="bi bi-person-badge"></i>
                                         </a>
-                                        <button data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $emp->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
+                                        <button data-bs-toggle="modal" data-bs-target="#edit-modal" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit"
+                                            data-action="{{ route('employees.update', $emp->id) }}"
+                                            data-edit="{{ json_encode(['name' => $emp->name, 'email' => $emp->email, 'department_id' => $emp->department_id, 'job_level' => $emp->job_level, 'role' => $emp->getRoleNames()->first(), 'joined_at' => $emp->joined_at?->format('Y-m-d'), 'resigned_at' => $emp->resigned_at?->format('Y-m-d')]) }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete employee?')">
@@ -182,31 +184,31 @@
         </div>
     </div>
 
-    @foreach($employees as $emp)
-    <div class="modal fade" id="edit-modal-{{ $emp->id }}" tabindex="-1" aria-hidden="true">
+    {{-- One edit modal for every row: filled from the clicked Edit button (see scripts). --}}
+    <div class="modal fade" id="edit-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg hr-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold">Update Employee Data</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="{{ route('employees.update', $emp->id) }}" method="POST">
+                <form method="POST" id="edit-form">
                     @csrf @method('PUT')
                     <div class="modal-body p-4 p-md-5">
                         <div class="mb-4">
                             <label class="form-label">Full Name</label>
-                            <input type="text" name="name" value="{{ $emp->name }}" class="form-control form-control-lg fs-6" required>
+                            <input type="text" name="name" class="form-control form-control-lg fs-6" required>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Email Address</label>
-                            <input type="email" name="email" value="{{ $emp->email }}" class="form-control form-control-lg fs-6">
+                            <input type="email" name="email" class="form-control form-control-lg fs-6">
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Department Allocation</label>
                             <select name="department_id" class="form-select form-select-lg fs-6">
                                 <option value="">-- No Department --</option>
                                 @foreach($departments as $dept)
-                                    <option value="{{ $dept->id }}" {{ $emp->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -215,7 +217,7 @@
                             <select name="job_level" class="form-select form-select-lg fs-6">
                                 <option value="">-- None --</option>
                                 @foreach(['Intern', 'Probation', 'Junior Associate', 'Associate', 'Senior Associate'] as $level)
-                                    <option value="{{ $level }}" {{ $emp->job_level === $level ? 'selected' : '' }}>{{ $level }}</option>
+                                    <option value="{{ $level }}">{{ $level }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -224,7 +226,7 @@
                             <label class="form-label">Role</label>
                             <select name="role" class="form-select form-select-lg fs-6">
                                 @foreach($roles as $role)
-                                    <option value="{{ $role }}" {{ $emp->hasRole($role) ? 'selected' : '' }}>{{ $role }}</option>
+                                    <option value="{{ $role }}">{{ $role }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -232,11 +234,11 @@
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label">Date of Join</label>
-                                <input type="date" name="joined_at" value="{{ $emp->joined_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
+                                <input type="date" name="joined_at" class="form-control form-control-lg fs-6">
                             </div>
                             <div class="col-6">
                                 <label class="form-label">Date of Resign</label>
-                                <input type="date" name="resigned_at" value="{{ $emp->resigned_at?->format('Y-m-d') }}" class="form-control form-control-lg fs-6">
+                                <input type="date" name="resigned_at" class="form-control form-control-lg fs-6">
                                 <small class="text-muted d-block mt-1">Leave blank if still active.</small>
                             </div>
                         </div>
@@ -249,7 +251,6 @@
             </div>
         </div>
     </div>
-    @endforeach
 @endsection
 
 @section('scripts')
@@ -258,6 +259,12 @@
     <script src="{{ asset('assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 
     <script>
+        // Shared edit modal: load the clicked row's values and point the form at that employee.
+        document.getElementById('edit-modal').addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            if (btn?.dataset.edit) window.fillForm(document.getElementById('edit-form'), JSON.parse(btn.dataset.edit), btn.dataset.action);
+        });
+
         $(document).ready(function() {
             $('#table1').DataTable({
                 "pageLength": 15,

@@ -191,7 +191,16 @@
                                         </form>
                                     @endif
                                     <a href="{{ route('subscriptions.show', $sub->id) }}" class="btn btn-sm btn-light-primary rounded-pill px-3" title="View"><i class="bi bi-eye"></i></a>
-                                    <button type="button" data-bs-toggle="modal" data-bs-target="#edit-sub-modal-{{ $sub->id }}" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit">
+                                    <button type="button" data-bs-toggle="modal" data-bs-target="#edit-sub-modal" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit"
+                                        data-action="{{ route('subscriptions.update', $sub->id) }}" data-title="Edit {{ $sub->label }}"
+                                        data-edit="{{ json_encode([
+                                            'app' => $sub->app, 'plan' => $sub->plan, 'account_id' => $sub->account_id, 'status' => $sub->status,
+                                            'password' => $sub->password, 'login_with_google' => (int) $sub->login_with_google,
+                                            'user_ids' => $sub->allocations->where('assignable_type', \App\Models\User::class)->pluck('assignable_id')->values(),
+                                            'shared_with' => $sub->shared_with, 'division' => $sub->division, 'period' => $sub->period, 'bill' => $sub->bill,
+                                            'currency' => $sub->currency, 'next_payment_date' => $sub->next_payment_date?->format('Y-m-d'),
+                                            'card_info' => $sub->card_info, 'notes' => $sub->notes,
+                                        ]) }}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <form action="{{ route('subscriptions.destroy', $sub->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(this, 'Delete this license?')">
@@ -238,18 +247,18 @@
     </div>
 </div>
 
-@foreach($subscriptions as $sub)
-<div class="modal fade" id="edit-sub-modal-{{ $sub->id }}" tabindex="-1" aria-hidden="true">
+{{-- One edit modal for every row: filled from the clicked Edit button (see scripts). --}}
+<div class="modal fade" id="edit-sub-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg hr-modal">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">Edit {{ $sub->label }}</h5>
+                <h5 class="modal-title fw-bold" data-edit-title>Edit License</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('subscriptions.update', $sub->id) }}" method="POST">
+            <form method="POST" id="edit-sub-form">
                 @csrf @method('PUT')
                 <div class="modal-body p-4">
-                    @include('subscriptions._form', ['sub' => $sub])
+                    @include('subscriptions._form', ['sub' => null, 'uid' => 'edit'])
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -259,7 +268,6 @@
         </div>
     </div>
 </div>
-@endforeach
 @endsection
 
 @section('scripts')
@@ -268,6 +276,14 @@
     <script src="{{ asset('assets/extensions/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 
     <script>
+        // Shared edit modal: load the clicked row's values and point the form at that license.
+        document.getElementById('edit-sub-modal').addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            if (!btn?.dataset.edit) return;
+            this.querySelector('[data-edit-title]').textContent = btn.dataset.title;
+            window.fillForm(document.getElementById('edit-sub-form'), JSON.parse(btn.dataset.edit), btn.dataset.action);
+        });
+
         $(document).ready(function () {
             const table = $('#table1').DataTable({
                 pageLength: 25,

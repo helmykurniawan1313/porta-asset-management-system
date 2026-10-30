@@ -270,6 +270,39 @@
             // Content shown later (modals, AJAX-loaded sections) gets enhanced when it appears.
             document.addEventListener('show.bs.modal', function (e) { enhance(e.target); });
             window.enhanceSelects = enhance;
+
+            /**
+             * Fills a form from a plain object ({ field: value }), for pages that use one shared
+             * edit modal instead of a hidden form per row. Handles text/date/number inputs,
+             * textareas, selects (keeping searchable Choices selects in sync), checkboxes and
+             * radios. Pass action to point the form at that record.
+             */
+            window.fillForm = function (form, data, action) {
+                if (action) form.action = action;
+                Object.entries(data).forEach(function ([name, value]) {
+                    var fields = form.querySelectorAll('[name="' + name + '"], [name="' + name + '[]"]');
+                    fields.forEach(function (el) {
+                        var v = value === null || value === undefined ? '' : value;
+                        // A hidden "0" paired with a checkbox of the same name is the unchecked fallback: keep it.
+                        if (el.type === 'hidden' && fields.length > 1) return;
+                        if (el.type === 'checkbox' || el.type === 'radio') {
+                            var values = Array.isArray(v) ? v.map(String) : [String(v)];
+                            var lone = el.type === 'checkbox' && !Array.isArray(v)
+                                && form.querySelectorAll('input[type="checkbox"][name="' + el.name + '"]').length === 1;
+                            el.checked = lone ? !!value && value !== '0' : values.includes(el.value);
+                        } else if (el.tagName === 'SELECT') {
+                            var values = (Array.isArray(v) ? v : [v]).map(String);
+                            Array.from(el.options).forEach(function (o) { o.selected = values.includes(o.value); });
+                            if (el._choices) {
+                                el._choices.removeActiveItems();
+                                values.forEach(function (x) { el._choices.setChoiceByValue(x); });
+                            }
+                        } else if (el.type !== 'file') {
+                            el.value = v;
+                        }
+                    });
+                });
+            };
         })();
     </script>
 

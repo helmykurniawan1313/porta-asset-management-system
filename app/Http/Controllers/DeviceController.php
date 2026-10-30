@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MasterInventoryExport;
 use App\Models\Device;
 use App\Models\DeviceIssue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver; // Uses standard PHP GD extension
 
@@ -29,6 +31,16 @@ class DeviceController extends Controller
         $employees = User::orderBy('name')->get();
 
         return view('inventory.index', compact('items', 'category', 'employees'));
+    }
+
+    /**
+     * "Export Excel" on the inventory pages: the full workbook (devices by category,
+     * employees, accounts, subscriptions, service logs). The route existed without
+     * this method, so the button returned a 500.
+     */
+    public function export($category = null)
+    {
+        return Excel::download(new MasterInventoryExport(), 'porta-inventory-'.now()->format('Y-m-d').'.xlsx');
     }
 
     /**
