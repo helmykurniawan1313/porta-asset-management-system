@@ -17,6 +17,7 @@ use App\BrandHealth\Services\PerformanceCycleAssigner;
 use App\BrandHealth\Services\SummaryProviderResolver;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,20 +36,8 @@ class BrandCycleController extends Controller
         $formulaWeights = BrandFormulaWeight::all();
 
         $labelFilters = $this->parseLabelFilters($request);
-        $monthFrom = $request->string('month_from')->trim()->toString() ?: null;
-        $monthTo = $request->string('month_to')->trim()->toString() ?: null;
 
-        $filtered = BrandCycle::with(['account', 'projectManager'])
-            ->when($request->integer('account_id'), fn ($query, $accountId) => $query->where('account_id', $accountId))
-            ->when($request->integer('project_manager_id'), fn ($query, $id) => $query->where('project_manager_id', $id))
-            ->when($request->string('platform')->trim()->toString(), fn ($query, $platform) => $query->where('platform', $platform))
-            ->when($request->string('search')->trim()->toString(), function ($query, $search) {
-                $query->whereHas('account', fn ($accountQuery) => $accountQuery->where('name', 'like', "%{$search}%"));
-            })
-            ->when($monthFrom, fn ($query, $monthFrom) => $this->applyMonthRangeFilter($query, $monthFrom, $monthTo))
-            ->orderByDesc('cycle_start_date');
-
-        $matching = $filtered->get()->map(fn (BrandCycle $cycle) => [
+        $matching = $this->filteredCycleQuery($request)->orderByDesc('cycle_start_date')->get()->map(fn (BrandCycle $cycle) => [
             ...$cycle->toArray(),
             'scores' => $calculator->calculate($cycle, $scoreBuckets, $labelBuckets, $formulaWeights),
         ]);
@@ -101,18 +90,7 @@ class BrandCycleController extends Controller
                 'healthy_count' => $matching->where('scores.health_label', 'SIP')->count(),
                 'at_risk_count' => $matching->whereIn('scores.health_label', ['KURANG', 'PARAH'])->count(),
             ],
-            'filters' => [
-                'search' => $request->string('search')->trim()->toString() ?: null,
-                'account_id' => $request->integer('account_id') ?: null,
-                'project_manager_id' => $request->integer('project_manager_id') ?: null,
-                'platform' => $request->string('platform')->trim()->toString() ?: null,
-                'growth_label' => $labelFilters['growth_label'],
-                'visibility_label' => $labelFilters['visibility_label'],
-                'engagement_label' => $labelFilters['engagement_label'],
-                'health_label' => $labelFilters['health_label'],
-                'month_from' => $monthFrom,
-                'month_to' => $monthTo,
-            ],
+            'filters' => $this->activeFilters($request),
             'defaultAiProvider' => config('services.brand_health.ai_summary.provider', 'groq'),
             // Sent flat (not pre-grouped by metric) — CycleDetailModal picks
             // the right (platform, tier) subset per cycle client-side, using
@@ -133,18 +111,7 @@ class BrandCycleController extends Controller
         $labelBuckets = BrandLabelBucket::all();
         $formulaWeights = BrandFormulaWeight::all();
 
-        $labelFilters = $this->parseLabelFilters($request);
-        $monthFrom = $request->string('month_from')->trim()->toString() ?: null;
-        $monthTo = $request->string('month_to')->trim()->toString() ?: null;
-
-        $cycles = BrandCycle::with(['account', 'projectManager'])
-            ->when($request->integer('account_id'), fn ($query, $accountId) => $query->where('account_id', $accountId))
-            ->when($request->integer('project_manager_id'), fn ($query, $id) => $query->where('project_manager_id', $id))
-            ->when($request->string('platform')->trim()->toString(), fn ($query, $platform) => $query->where('platform', $platform))
-            ->when($request->string('search')->trim()->toString(), function ($query, $search) {
-                $query->whereHas('account', fn ($accountQuery) => $accountQuery->where('name', 'like', "%{$search}%"));
-            })
-            ->when($monthFrom, fn ($query, $monthFrom) => $this->applyMonthRangeFilter($query, $monthFrom, $monthTo))
+        $cycles = $this->filteredCycleQuery($request)
             ->orderByDesc('cycle_start_date')
             ->get()
             ->map(function (BrandCycle $cycle) use ($calculator, $scoreBuckets, $labelBuckets, $formulaWeights) {
@@ -162,28 +129,9 @@ class BrandCycleController extends Controller
                 ];
             });
 
-        $cycles = $this->applyLabelFilters($cycles, $labelFilters);
-
-        $filterParts = [];
-        if ($search = $request->string('search')->trim()->toString()) {
-            $filterParts[] = "search: \"{$search}\"";
-        }
-        if ($pmId = $request->integer('project_manager_id')) {
-            $pm = User::find($pmId);
-            $filterParts[] = 'PM: '.($pm->name ?? "#{$pmId}");
-        }
-        foreach (['growth_label' => 'growth', 'visibility_label' => 'visibility', 'engagement_label' => 'engagement', 'health_label' => 'health'] as $field => $shortLabel) {
-            if ($labelFilters[$field]) {
-                $filterParts[] = "{$shortLabel}: ".implode(', ', $labelFilters[$field]);
-            }
-        }
-        if ($monthFrom) {
-            $filterParts[] = 'period: '.$this->formatMonthRange($monthFrom, $monthTo);
-        }
-
         return [
-            'cycles' => $cycles,
-            'filterSummary' => $filterParts ? implode(', ', $filterParts) : 'none',
+            'cycles' => $this->applyLabelFilters($cycles, $this->parseLabelFilters($request)),
+            'filterSummary' => $this->filterDescription($request)['summary'],
         ];
     }
 
@@ -534,7 +482,7 @@ class BrandCycleController extends Controller
 
     /**
      * Cycles matching the current request's filters, each paired with its computed scores.
-     * Shared by index(), pdf(), and summarizeFiltered() so all three stay in lockstep.
+     * Used by summarizeFiltered(); list and exports share the same filteredCycleQuery().
      */
     private function filteredCycles(Request $request, MetricCalculator $calculator): Collection
     {
@@ -542,18 +490,7 @@ class BrandCycleController extends Controller
         $labelBuckets = BrandLabelBucket::all();
         $formulaWeights = BrandFormulaWeight::all();
 
-        $labelFilters = $this->parseLabelFilters($request);
-        $monthFrom = $request->string('month_from')->trim()->toString() ?: null;
-        $monthTo = $request->string('month_to')->trim()->toString() ?: null;
-
-        $cycles = BrandCycle::with(['account', 'projectManager'])
-            ->when($request->integer('account_id'), fn ($query, $accountId) => $query->where('account_id', $accountId))
-            ->when($request->integer('project_manager_id'), fn ($query, $id) => $query->where('project_manager_id', $id))
-            ->when($request->string('platform')->trim()->toString(), fn ($query, $platform) => $query->where('platform', $platform))
-            ->when($request->string('search')->trim()->toString(), function ($query, $search) {
-                $query->whereHas('account', fn ($accountQuery) => $accountQuery->where('name', 'like', "%{$search}%"));
-            })
-            ->when($monthFrom, fn ($query, $monthFrom) => $this->applyMonthRangeFilter($query, $monthFrom, $monthTo))
+        $cycles = $this->filteredCycleQuery($request)
             ->orderBy('cycle_start_date')
             ->get()
             ->map(fn (BrandCycle $cycle) => [
@@ -561,7 +498,42 @@ class BrandCycleController extends Controller
                 'scores' => $calculator->calculate($cycle, $scoreBuckets, $labelBuckets, $formulaWeights),
             ]);
 
-        return $this->applyLabelFilters($cycles, $labelFilters);
+        return $this->applyLabelFilters($cycles, $this->parseLabelFilters($request));
+    }
+
+    /**
+     * The SQL half of the cycle filters (everything but the score labels, which
+     * need computed scores — see applyLabelFilters()). The one definition the
+     * list, exports and AI summary all build on, so they can't drift apart.
+     */
+    private function filteredCycleQuery(Request $request): Builder
+    {
+        $filters = $this->activeFilters($request);
+
+        return BrandCycle::with(['account', 'projectManager'])
+            ->when($filters['account_id'], fn ($query, $accountId) => $query->where('account_id', $accountId))
+            ->when($filters['project_manager_id'], fn ($query, $id) => $query->where('project_manager_id', $id))
+            ->when($filters['platform'], fn ($query, $platform) => $query->where('platform', $platform))
+            ->when($filters['search'], function ($query, $search) {
+                $query->whereHas('account', fn ($accountQuery) => $accountQuery->where('name', 'like', "%{$search}%"));
+            })
+            ->when($filters['month_from'], fn ($query, $monthFrom) => $this->applyMonthRangeFilter($query, $monthFrom, $filters['month_to']));
+    }
+
+    /**
+     * Every cycle filter read from the request, normalized (null when unset).
+     */
+    private function activeFilters(Request $request): array
+    {
+        return [
+            'search' => $request->string('search')->trim()->toString() ?: null,
+            'account_id' => $request->integer('account_id') ?: null,
+            'project_manager_id' => $request->integer('project_manager_id') ?: null,
+            'platform' => $request->string('platform')->trim()->toString() ?: null,
+            ...$this->parseLabelFilters($request),
+            'month_from' => $request->string('month_from')->trim()->toString() ?: null,
+            'month_to' => $request->string('month_to')->trim()->toString() ?: null,
+        ];
     }
 
     /**
@@ -614,14 +586,9 @@ class BrandCycleController extends Controller
 
     private function filterDescription(Request $request): array
     {
-        $labelFilters = $this->parseLabelFilters($request);
-        $monthFrom = $request->string('month_from')->trim()->toString() ?: null;
-        $monthTo = $request->string('month_to')->trim()->toString() ?: null;
-        $search = $request->string('search')->trim()->toString() ?: null;
-        $accountId = $request->integer('account_id') ?: null;
-        $platform = $request->string('platform')->trim()->toString() ?: null;
-
-        $pmId = $request->integer('project_manager_id') ?: null;
+        $filters = $this->activeFilters($request);
+        ['search' => $search, 'account_id' => $accountId, 'project_manager_id' => $pmId, 'platform' => $platform,
+            'month_from' => $monthFrom, 'month_to' => $monthTo] = $filters;
 
         $parts = [];
         if ($accountId) {
@@ -639,8 +606,8 @@ class BrandCycleController extends Controller
             $parts[] = 'platform: '.ucfirst($platform);
         }
         foreach (['growth_label' => 'growth', 'visibility_label' => 'visibility', 'engagement_label' => 'engagement', 'health_label' => 'health'] as $field => $shortLabel) {
-            if ($labelFilters[$field]) {
-                $parts[] = "{$shortLabel}: ".implode(', ', $labelFilters[$field]);
+            if ($filters[$field]) {
+                $parts[] = "{$shortLabel}: ".implode(', ', $filters[$field]);
             }
         }
         if ($monthFrom) {
@@ -648,18 +615,7 @@ class BrandCycleController extends Controller
         }
 
         return [
-            'filters' => [
-                'search' => $search,
-                'account_id' => $accountId,
-                'project_manager_id' => $pmId,
-                'platform' => $platform,
-                'growth_label' => $labelFilters['growth_label'],
-                'visibility_label' => $labelFilters['visibility_label'],
-                'engagement_label' => $labelFilters['engagement_label'],
-                'health_label' => $labelFilters['health_label'],
-                'month_from' => $monthFrom,
-                'month_to' => $monthTo,
-            ],
+            'filters' => $filters,
             'summary' => $parts ? implode(', ', $parts) : 'none (all cycles)',
         ];
     }
