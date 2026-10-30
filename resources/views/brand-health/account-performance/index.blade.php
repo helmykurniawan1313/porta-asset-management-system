@@ -48,8 +48,9 @@
 @endif
 
 <div class="bh-card p-0 mt-3">
-    <div class="d-flex justify-content-end px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
-        <button type="button" class="btn btn-sm btn-link bh-muted" data-bs-toggle="modal" data-bs-target="#scoring-info" title="How statuses are scored"><i class="bi bi-info-circle"></i></button>
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
+        <span class="fw-semibold">Accounts <span class="bh-muted fw-normal small">· {{ number_format($rows->total()) }} {{ \Illuminate\Support\Str::plural('result', $rows->total()) }}</span></span>
+        <button type="button" class="btn btn-sm btn-link bh-muted text-decoration-none" data-bs-toggle="modal" data-bs-target="#scoring-info"><i class="bi bi-info-circle"></i> How scoring works</button>
     </div>
     <div class="table-responsive">
         <table class="bh-table">

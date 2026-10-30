@@ -29,6 +29,14 @@
         [data-bs-theme="dark"] .choices[data-type*=select-one]::after { filter: invert(1); }
         .choices__list--dropdown, .choices__list[aria-expanded] { z-index: 1060; border-color: #dce7f1; border-radius: 0 0 .25rem .25rem; box-shadow: 0 12px 24px rgba(16, 24, 40, .12); }
         .choices__list--dropdown .choices__item, .choices__list[aria-expanded] .choices__item { font-size: .95rem; padding: .55rem .9rem; }
+        /* A compact control (e.g. "All PMs") still gets a list wide enough for full names, one per line;
+           Choices' default word-break: break-all split names mid-word. */
+        .choices[data-type*=select-one]:not(.is-small) { min-width: 11rem; }
+        .choices__list--dropdown, .choices__list[aria-expanded] { min-width: 100%; width: max-content; max-width: min(22rem, 90vw); }
+        .choices__list--dropdown .choices__item, .choices__list[aria-expanded] .choices__item {
+            word-break: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .choices[data-type*=select-one] .choices__input { min-width: 0; width: 100%; }
         .choices__list--dropdown .choices__item--selectable.is-highlighted { background: var(--porta-accent-soft); }
         .choices__list--dropdown .choices__list { max-height: 280px; }
         .choices[data-type*=select-one] .choices__input { border-bottom-color: #dce7f1; padding: .55rem .9rem; font-size: .95rem; }
