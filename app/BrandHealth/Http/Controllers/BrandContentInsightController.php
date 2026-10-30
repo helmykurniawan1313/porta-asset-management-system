@@ -373,7 +373,7 @@ class BrandContentInsightController extends Controller
             'account_id' => ['required', 'exists:brand_accounts,id'],
             'cycle_id' => [
                 'required',
-                Rule::exists('cycles', 'id')->where(
+                Rule::exists('brand_cycles', 'id')->where(
                     fn ($query) => $query->where('account_id', $request->input('account_id'))
                 ),
             ],
