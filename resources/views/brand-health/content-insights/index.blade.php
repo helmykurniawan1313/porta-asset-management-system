@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Content Insights | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-styles')
 <style>

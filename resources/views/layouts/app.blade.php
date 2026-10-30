@@ -13,23 +13,29 @@
     <style>
         /* Searchable selects (Choices.js) — match Bootstrap form controls, light + dark. */
         .choices { margin-bottom: 0; }
+        /* --bs-body-bg is the tinted page background in this theme, so the control uses white explicitly. */
         .choices__inner {
-            min-height: calc(1.5em + .75rem + 2px); padding: .3rem .75rem; font-size: 1rem;
-            background: var(--bs-body-bg, #fff); border: 1px solid #dce7f1; border-radius: .375rem;
+            display: flex; align-items: center; min-height: 38px; padding: .25rem 2.25rem .25rem .75rem !important; font-size: 1rem;
+            background: #fff; border: 1px solid #dce7f1; border-radius: .25rem;
         }
-        .choices.is-focused .choices__inner, .choices.is-open .choices__inner { border-color: #435ebe; box-shadow: 0 0 0 .2rem rgba(67, 94, 190, .15); }
-        .choices.is-open .choices__inner { border-radius: .375rem .375rem 0 0; }
-        .choices__list--single { padding: .1rem 1rem .1rem 0; }
-        .choices[data-type*=select-one]::after { border-color: #6c757d transparent transparent; right: 14px; }
-        .choices__list--dropdown, .choices__list[aria-expanded] { z-index: 1060; border-color: #dce7f1; border-radius: 0 0 .375rem .375rem; box-shadow: 0 12px 24px rgba(16, 24, 40, .12); }
+        .choices.is-focused .choices__inner, .choices.is-open .choices__inner { border-color: var(--porta-accent); box-shadow: 0 0 0 .2rem var(--porta-accent-soft); }
+        .choices.is-open .choices__inner { border-radius: .25rem .25rem 0 0; }
+        .choices__list--single { padding: 0; }
+        /* Same chevron as .form-select instead of Choices' triangle. */
+        .choices[data-type*=select-one]::after, .choices[data-type*=select-one].is-open::after {
+            border: 0; width: 16px; height: 12px; margin-top: -6px; right: 12px;
+            background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") no-repeat center / 16px 12px;
+        }
+        [data-bs-theme="dark"] .choices[data-type*=select-one]::after { filter: invert(1); }
+        .choices__list--dropdown, .choices__list[aria-expanded] { z-index: 1060; border-color: #dce7f1; border-radius: 0 0 .25rem .25rem; box-shadow: 0 12px 24px rgba(16, 24, 40, .12); }
         .choices__list--dropdown .choices__item, .choices__list[aria-expanded] .choices__item { font-size: .95rem; padding: .55rem .9rem; }
-        .choices__list--dropdown .choices__item--selectable.is-highlighted { background: rgba(67, 94, 190, .1); }
+        .choices__list--dropdown .choices__item--selectable.is-highlighted { background: var(--porta-accent-soft); }
         .choices__list--dropdown .choices__list { max-height: 280px; }
         .choices[data-type*=select-one] .choices__input { border-bottom-color: #dce7f1; padding: .55rem .9rem; font-size: .95rem; }
         .choices__heading { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8a94a6; padding: .6rem .9rem .3rem; border-bottom: 0; }
-        .choices__list--multiple .choices__item { background: #435ebe; border-color: #435ebe; border-radius: 999px; font-weight: 600; }
+        .choices__list--multiple .choices__item { background: var(--porta-accent); border-color: var(--porta-accent); border-radius: 999px; font-weight: 600; }
         .choices__placeholder { opacity: .6; }
-        .choices.is-small .choices__inner { min-height: calc(1.5em + .5rem + 2px); padding: .15rem .5rem; font-size: .875rem; }
+        .choices.is-small .choices__inner { min-height: 31px; padding: .15rem 2rem .15rem .5rem !important; font-size: .875rem; }
         [data-bs-theme="dark"] .choices__inner,
         [data-bs-theme="dark"] .choices__list--dropdown,
         [data-bs-theme="dark"] .choices__list[aria-expanded] { background: #1e1e2d; border-color: rgba(255, 255, 255, .12); color: #e5e7eb; }
@@ -51,6 +57,8 @@
 
             <div id="main-content">
                 
+                {{-- Pages with their own heading (e.g. Brand Health) leave header_title unset. --}}
+                @if(View::hasSection('header_title') || isset($header))
                 <div class="page-heading mb-4">
                     <div class="page-title">
                         <div class="row">
@@ -60,6 +68,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
                 
                 <section class="section">
                     @yield('content')

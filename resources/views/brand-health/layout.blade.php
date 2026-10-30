@@ -10,7 +10,7 @@
 <style>
     :root {
         --bh-surface: #ffffff; --bh-raised: #f8fafc; --bh-border: #e5e9f0; --bh-border-strong: #cfd6e0;
-        --bh-ink: #1f2937; --bh-ink-muted: #5b6474; --bh-ink-faint: #8a94a6; --bh-accent: #435ebe; --bh-accent-soft: rgba(67, 94, 190, .1);
+        --bh-ink: #1f2937; --bh-ink-muted: #5b6474; --bh-ink-faint: #8a94a6; --bh-accent: var(--porta-accent); --bh-accent-soft: var(--porta-accent-soft);
         --status-sip-bg: #e2f3ec; --status-sip-ink: #146c48;
         --status-bagus-bg: #eaf3d9; --status-bagus-ink: #4d6b17;
         --status-cukup-bg: #fdf1d7; --status-cukup-ink: #92650a;
@@ -19,7 +19,7 @@
     }
     [data-bs-theme="dark"] {
         --bh-surface: #1e1e2d; --bh-raised: #232336; --bh-border: rgba(255, 255, 255, .08); --bh-border-strong: rgba(255, 255, 255, .16);
-        --bh-ink: #e5e7eb; --bh-ink-muted: #a1a8b8; --bh-ink-faint: #6f7790; --bh-accent: #818cf8; --bh-accent-soft: rgba(129, 140, 248, .14);
+        --bh-ink: #e5e7eb; --bh-ink-muted: #a1a8b8; --bh-ink-faint: #6f7790; --bh-accent: var(--porta-accent); --bh-accent-soft: var(--porta-accent-soft);
         --status-sip-bg: #123528; --status-sip-ink: #7fe0b3;
         --status-bagus-bg: #2a350f; --status-bagus-ink: #c3e079;
         --status-cukup-bg: #3a2c0c; --status-cukup-ink: #f0c869;
@@ -62,6 +62,11 @@
     .bh-empty { text-align: center; color: var(--bh-ink-faint); padding: 2.5rem 1rem; }
     .bh-empty .bi { display: block; font-size: 2rem; opacity: .4; margin-bottom: .4rem; }
     .bh-section-title { font-weight: 700; font-size: 1rem; margin: 0 0 .75rem; }
+    /* Status banner (e.g. "90 cycles need attention"); colours come from inline status-tone vars. */
+    .bh-alert-tile { display: flex; align-items: center; gap: .9rem; border-radius: 14px; padding: .9rem 1.1rem; border: 1px solid; margin-top: .75rem; text-decoration: none; transition: filter .15s ease; }
+    .bh-alert-tile > .bi { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+    .bh-alert-tile > .bi::before { vertical-align: 0; }
+    a.bh-alert-tile:hover { filter: brightness(.97); }
     .bi::before { vertical-align: -.1em; }
 
     [data-bs-theme="dark"] .bg-light-primary,   [data-bs-theme="dark"] .btn-light-primary   { background-color: rgba(129, 140, 248, .16) !important; color: #a5b4fc !important; }

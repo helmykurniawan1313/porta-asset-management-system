@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Brand Health | Under maintenance')
-@section('header_title', 'Brand Health')
 
 @section('bh-content')
 <div class="bh-card text-center py-5">

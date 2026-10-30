@@ -1,14 +1,11 @@
 @extends('brand-health.layout')
 
 @section('title', 'Reels / Video | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-styles')
 <style>
     .bh-click-card { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .bh-click-card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16, 24, 40, .08); }
-    .bh-alert-tile { display: flex; align-items: center; gap: .75rem; border-radius: 14px; padding: 1rem; border: 1px solid; margin-top: .75rem; text-decoration: none; }
-    .bh-alert-tile .bi { font-size: 1.5rem; }
     .bh-row-click { cursor: pointer; }
     .bh-sort-link { color: inherit; text-decoration: none; }
     .bh-label-check { display: inline-flex; align-items: center; gap: .35rem; margin: 0 .5rem .4rem 0; cursor: pointer; }
@@ -108,8 +105,9 @@
 </div>
 
 <div class="bh-card p-0 mt-3" id="performance-table" style="scroll-margin-top: 1rem">
-    <div class="d-flex justify-content-end px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
-        <button type="button" class="btn btn-sm btn-link bh-muted" data-bs-toggle="modal" data-bs-target="#scoring-info" title="How statuses are scored"><i class="bi bi-info-circle"></i></button>
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
+        <span class="fw-semibold">Posts <span class="bh-muted fw-normal small">· {{ number_format($performances->total()) }} {{ \Illuminate\Support\Str::plural('result', $performances->total()) }}</span></span>
+        <button type="button" class="btn btn-sm btn-link bh-muted text-decoration-none" data-bs-toggle="modal" data-bs-target="#scoring-info"><i class="bi bi-info-circle"></i> How scoring works</button>
     </div>
     <div class="table-responsive">
         <table class="bh-table" style="min-width: 1000px">
@@ -161,7 +159,7 @@
     @if($performances->lastPage() > 1)
         <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 border-top gap-2" style="border-color: var(--bh-border) !important">
             <small class="bh-muted">Showing <b class="bh-num">{{ $performances->firstItem() }}–{{ $performances->lastItem() }}</b> of <b class="bh-num">{{ $performances->total() }}</b></small>
-            {{ $performances->onEachSide(1)->links() }}
+            {{ $performances->onEachSide(1)->links('brand-health.partials.pager') }}
         </div>
     @endif
 </div>

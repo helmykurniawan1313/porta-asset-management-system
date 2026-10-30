@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Views Trend | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-styles')
 <style>
@@ -153,7 +152,7 @@
     @if($rows->lastPage() > 1)
         <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 border-top gap-2" style="border-color: var(--bh-border) !important">
             <small class="bh-muted">Showing <b class="bh-num">{{ $rows->firstItem() }}–{{ $rows->lastItem() }}</b> of <b class="bh-num">{{ $rows->total() }}</b></small>
-            {{ $rows->onEachSide(1)->links() }}
+            {{ $rows->onEachSide(1)->links('brand-health.partials.pager') }}
         </div>
     @endif
 </div>

@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Weekly Reports | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-content')
 @php
@@ -80,7 +79,7 @@
     @if($reports->lastPage() > 1)
         <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 border-top gap-2" style="border-color: var(--bh-border) !important">
             <small class="bh-muted">Showing <b class="bh-num">{{ $reports->firstItem() }}–{{ $reports->lastItem() }}</b> of <b class="bh-num">{{ $reports->total() }}</b></small>
-            {{ $reports->onEachSide(1)->links() }}
+            {{ $reports->onEachSide(1)->links('brand-health.partials.pager') }}
         </div>
     @endif
 </div>

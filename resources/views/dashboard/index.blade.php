@@ -58,8 +58,8 @@
                 </div>
                 <div class="card-body py-4">
                     @if($pendingReviews->isEmpty())
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+                        <div class="d-flex flex-column align-items-center text-center text-muted py-5">
+                            <i class="bi bi-check-circle fs-1 text-success mb-2"></i>
                             You're all caught up — no pending reviews.
                         </div>
                     @else

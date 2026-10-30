@@ -208,9 +208,46 @@
     color: #fff !important;
 }
 
-a:not(.btn),
+/* Links take the accent through Bootstrap's own variables rather than an !important
+   rule, so components that set their own link color (active pills, alerts, badges)
+   still win. */
+:root,
+[data-bs-theme="light"] {
+    --bs-link-color: var(--porta-accent);
+    --bs-link-color-rgb: 79, 70, 229;
+    --bs-link-hover-color: var(--porta-accent-hover);
+    --bs-link-hover-color-rgb: 67, 56, 202;
+}
+
+[data-bs-theme="dark"] {
+    --bs-link-color: var(--porta-accent);
+    --bs-link-color-rgb: 129, 140, 248;
+    --bs-link-hover-color: var(--porta-accent-hover);
+    --bs-link-hover-color-rgb: 165, 180, 252;
+}
+
 .text-primary {
     color: var(--porta-accent) !important;
+}
+
+/* Other "active" states the base theme paints in its own blue. */
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link,
+.page-item.active .page-link,
+.form-check-input:checked,
+.bg-primary {
+    background-color: var(--porta-accent) !important;
+    border-color: var(--porta-accent) !important;
+}
+
+.page-link {
+    color: var(--porta-accent);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--porta-accent);
+    box-shadow: 0 0 0 .2rem var(--porta-accent-soft);
 }
 
 /* Cards, tables, footer: quiet neutral surfaces with thin borders instead of heavy shadows */
@@ -228,4 +265,12 @@ a:not(.btn),
 body {
     background-color: var(--porta-surface-muted);
     color: var(--porta-text);
+}
+
+
+/* The base theme fixes .bi at 1rem square; icons enlarged with .fs-* overflowed that box
+   (looked off-centre or overlapped nearby text). Let them size to their glyph. */
+.bi[class*="fs-"] {
+    width: auto;
+    height: auto;
 }

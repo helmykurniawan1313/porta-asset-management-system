@@ -1,14 +1,11 @@
 @extends('brand-health.layout')
 
 @section('title', 'Cycles | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-styles')
 <style>
     .bh-click-card { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
     .bh-click-card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16, 24, 40, .08); }
-    .bh-alert-tile { display: flex; align-items: center; gap: .75rem; border-radius: 14px; padding: 1rem; border: 1px solid; margin-top: .75rem; text-decoration: none; }
-    .bh-alert-tile .bi { font-size: 1.5rem; }
     .bh-row-click { cursor: pointer; }
     .bh-input-chip { border: 1px solid var(--bh-border); border-radius: 10px; padding: .55rem .75rem; background: var(--bh-raised); }
     .bh-input-chip .bh-stat-label { font-size: .65rem; }
@@ -124,8 +121,9 @@
 
 {{-- Table --}}
 <div class="bh-card mt-3 p-0" id="cycles-table" style="scroll-margin-top: 1rem">
-    <div class="d-flex justify-content-end px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
-        <button type="button" class="btn btn-sm btn-link bh-muted" data-bs-toggle="modal" data-bs-target="#scoring-info" title="How statuses are scored"><i class="bi bi-info-circle"></i></button>
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom" style="border-color: var(--bh-border) !important">
+        <span class="fw-semibold">Cycles <span class="bh-muted fw-normal small">· {{ number_format($cycles->total()) }} {{ \Illuminate\Support\Str::plural('result', $cycles->total()) }}</span></span>
+        <button type="button" class="btn btn-sm btn-link bh-muted text-decoration-none" data-bs-toggle="modal" data-bs-target="#scoring-info"><i class="bi bi-info-circle"></i> How scoring works</button>
     </div>
     <div class="table-responsive">
         <table class="bh-table" style="min-width: 900px">
@@ -181,7 +179,7 @@
     @if($cycles->lastPage() > 1)
         <div class="d-flex flex-wrap justify-content-between align-items-center px-3 py-2 border-top gap-2" style="border-color: var(--bh-border) !important">
             <small class="bh-muted">Showing <b class="bh-num">{{ $cycles->firstItem() }}–{{ $cycles->lastItem() }}</b> of <b class="bh-num">{{ $cycles->total() }}</b></small>
-            {{ $cycles->onEachSide(1)->links() }}
+            {{ $cycles->onEachSide(1)->links('brand-health.partials.pager') }}
         </div>
     @endif
 </div>
@@ -443,13 +441,14 @@ const round = (v, d = 2) => Math.round(Number(v) * 10 ** d) / 10 ** d;
     if (!canvas || !dist.tiers) return;
     const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
     const colors = dark ? ['#3987e5', '#d95926', '#199e70', '#c98500'] : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100'];
+    // Grouped bars: the labels are separate categories, so a line between them would imply a trend that isn't there.
     BH.chart(canvas, {
-        type: 'line',
+        type: 'bar',
         data: { labels: dist.tiers.map(String), datasets: (dist.series || []).map((s, i) => ({ label: s.label, data: dist.tiers.map((t) => s.counts[t] ?? 0),
-            borderColor: colors[i % 4], backgroundColor: colors[i % 4], pointBackgroundColor: colors[i % 4], pointRadius: 4, tension: .3, fill: false })) },
+            backgroundColor: colors[i % 4], borderRadius: 4, maxBarThickness: 22, categoryPercentage: .7, barPercentage: .9 })) },
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y} cycle${c.parsed.y === 1 ? '' : 's'}` } } },
-            scales: { x: { title: { display: true, text: 'Health Label' } }, y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Cycle Count' } } } },
+            scales: { x: { grid: { display: false }, title: { display: true, text: 'Label' } }, y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Cycles' } } } },
     });
 })();
 

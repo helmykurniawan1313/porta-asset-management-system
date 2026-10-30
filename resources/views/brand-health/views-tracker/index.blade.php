@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Views Trackers | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-content')
 <div class="bh-page-head">

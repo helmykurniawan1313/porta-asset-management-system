@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Site Settings | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-content')
 <div class="bh-page-head">

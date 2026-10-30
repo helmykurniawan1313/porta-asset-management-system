@@ -1,7 +1,6 @@
 @extends('brand-health.layout')
 
 @section('title', 'Legal Pages | Brand Health')
-@section('header_title', 'Brand Health')
 
 @section('bh-styles')
 <link rel="stylesheet" href="{{ asset('assets/extensions/quill/quill.snow.css') }}">

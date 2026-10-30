@@ -58,8 +58,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('departments', DepartmentController::class)->except(['create', 'edit', 'show']);
 
     /* --- ACCOUNTS & SUBSCRIPTIONS --- */
-    Route::resource('accounts', AccountController::class);
-    Route::resource('subscriptions', SubscriptionController::class);
+    Route::resource('accounts', AccountController::class)->except(['create', 'edit']);
+    Route::resource('subscriptions', SubscriptionController::class)->except(['create', 'edit']);
     Route::post('/subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
     Route::post('/subscriptions/{subscription}/allocate', [SubscriptionController::class, 'allocate'])->name('subscriptions.allocate');
     Route::delete('/allocations/{allocation}', [SubscriptionController::class, 'revoke'])->name('subscriptions.revoke');

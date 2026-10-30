@@ -162,8 +162,10 @@
                             auth()->user()->can('admin-brand-health') ? ['Report Prompt', 'brand-health.report-prompt.index'] : null,
                         ]))],
                     ];
-                    // routeIs() with a wildcard on the route's resource ("brand-health.cycles.*").
-                    $bhActive = fn ($route) => request()->routeIs($route) || request()->routeIs(preg_replace('/\.[^.]+$/', '.*', $route));
+                    // routeIs() with a wildcard on the route's resource ("brand-health.cycles.*"). Two-part
+                    // names like "brand-health.dashboard" match exactly; a wildcard there would be "brand-health.*".
+                    $bhActive = fn ($route) => request()->routeIs($route)
+                        || (substr_count($route, '.') >= 2 && request()->routeIs(preg_replace('/\.[^.]+$/', '.*', $route)));
                 @endphp
                 <li class="sidebar-title">Brand Health</li>
                 @foreach($bhMenu as [$label, $icon, $route, $children])
