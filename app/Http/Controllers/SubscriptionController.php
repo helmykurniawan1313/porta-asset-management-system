@@ -8,6 +8,8 @@ use App\Models\Account;
 use App\Models\User;
 use App\Models\Device;
 use App\Models\SubscriptionAllocation;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SubscriptionController extends Controller
 {
@@ -33,31 +35,46 @@ class SubscriptionController extends Controller
 
     public function store(Request $request)
     {
-        $subscription = Subscription::create($this->validated($request));
-        $this->syncUsers($subscription, $request);
+        $data = $this->validated($request);
+        $userIds = $this->validatedUserIds($request);
+
+        DB::transaction(function () use ($data, $userIds) {
+            $this->syncUsers(Subscription::create($data), $userIds);
+        });
 
         return back()->with('success', 'Subscription successfully tracked!');
     }
 
     public function update(Request $request, Subscription $subscription)
     {
-        $subscription->update($this->validated($request));
-        $this->syncUsers($subscription, $request);
+        $data = $this->validated($request);
+        $userIds = $this->validatedUserIds($request);
+
+        DB::transaction(function () use ($subscription, $data, $userIds) {
+            $subscription->update($data);
+            $this->syncUsers($subscription, $userIds);
+        });
 
         return back()->with('success', 'Subscription updated successfully!');
+    }
+
+    /**
+     * The "Used by" picker, validated before anything is saved so a bad id can't leave a half-saved license.
+     */
+    protected function validatedUserIds(Request $request): Collection
+    {
+        return collect($request->validate([
+            'user_ids'   => 'nullable|array',
+            'user_ids.*' => 'integer|exists:users,id',
+        ])['user_ids'] ?? [])->map(fn ($id) => (int) $id)->unique();
     }
 
     /**
      * Make the license's employee allocations match the "Used by" picker exactly.
      * Device allocations are managed separately on the detail page and left alone.
      */
-    protected function syncUsers(Subscription $subscription, Request $request): void
+    protected function syncUsers(Subscription $subscription, Collection $ids): void
     {
-        $ids = collect($request->validate([
-            'user_ids'   => 'nullable|array',
-            'user_ids.*' => 'integer|exists:users,id',
-        ])['user_ids'] ?? [])->map(fn ($id) => (int) $id)->unique();
-
         $userType = User::class;
         $subscription->allocations()->where('assignable_type', $userType)
             ->whereNotIn('assignable_id', $ids)->delete();
