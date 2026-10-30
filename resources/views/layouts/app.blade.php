@@ -8,7 +8,8 @@
     
     <link rel="stylesheet" href="{{ asset('assets/compiled/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/compiled/css/app-dark.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/compiled/css/porta-theme.css') }}">
+    {{-- ?v= is the file's mtime so browsers fetch the new copy whenever it changes. --}}
+    <link rel="stylesheet" href="{{ asset('assets/compiled/css/porta-theme.css') }}?v={{ filemtime(public_path('assets/compiled/css/porta-theme.css')) }}">
     <link rel="stylesheet" href="{{ asset('assets/extensions/choices.js/public/assets/styles/choices.min.css') }}">
     <style>
         /* Searchable selects (Choices.js) — match Bootstrap form controls, light + dark. */
@@ -148,7 +149,7 @@
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="app-toast-container"></div>
 
-    <script src="{{ asset('assets/static/js/components/dark.js') }}"></script>
+    <script src="{{ asset('assets/static/js/components/dark.js') }}?v={{ filemtime(public_path('assets/static/js/components/dark.js')) }}"></script>
     <script src="{{ asset('assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
     <script src="{{ asset('assets/compiled/js/app.js') }}"></script>
 

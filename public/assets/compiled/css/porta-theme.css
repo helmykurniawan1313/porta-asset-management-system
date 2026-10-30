@@ -283,7 +283,13 @@ body {
 
 /* The base theme fixes .bi at 1rem square; icons enlarged with .fs-* overflowed that box
    (looked off-centre or overlapped nearby text). Let them size to their glyph. */
-.bi[class*="fs-"] {
+/* :root outranks the dark theme's own `html[data-bs-theme="dark"] .bi` size rule. Page content and
+   modals size every icon to its glyph (pages enlarge icons with their own classes too); the sidebar
+   keeps the fixed box it uses to line up its menu. */
+.bi[class*="fs-"],
+:root .bi[class*="fs-"],
+:root #main-content .bi,
+:root .modal .bi {
     width: auto;
     height: auto;
 }
