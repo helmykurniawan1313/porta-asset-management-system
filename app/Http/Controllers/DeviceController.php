@@ -85,6 +85,7 @@ class DeviceController extends Controller
             'model'          => 'nullable|string',
             'purchase_date'  => 'nullable|date',
             'user_id'    => 'nullable|exists:users,id',
+            'assigned_at'    => 'nullable|date',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
             'os'             => 'nullable|string',
@@ -108,6 +109,9 @@ class DeviceController extends Controller
             'images'         => 'nullable|array|max:3',
             'images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        // Assigned without a date: assume it was handed over today. Stock devices carry no date.
+        $data['assigned_at'] = empty($data['user_id']) ? null : ($data['assigned_at'] ?? now()->toDateString());
 
         // OPTIMIZED: Handle Image Uploads with WEBP Conversion (Intervention v3)
         if ($request->hasFile('images')) {
@@ -164,6 +168,7 @@ class DeviceController extends Controller
             'model'          => 'nullable|string',
             'purchase_date'  => 'nullable|date',
             'user_id'    => 'nullable|exists:users,id',
+            'assigned_at'    => 'nullable|date',
             'ram'            => 'nullable|string',
             'rom'            => 'nullable|string',
             'os'             => 'nullable|string',
@@ -229,6 +234,17 @@ class DeviceController extends Controller
                     // Assign to the specific empty slot (e.g., image2)
                     $data[$availableSlots[$index]] = 'assets/' . $filename;
                 }
+            }
+        }
+
+        // Assign date follows ownership: a new owner without a newly picked date gets today,
+        // and returning to stock clears it.
+        if (array_key_exists('user_id', $data)) {
+            if (empty($data['user_id'])) {
+                $data['assigned_at'] = null;
+            } elseif ($device->user_id != $data['user_id']
+                && (empty($data['assigned_at']) || $data['assigned_at'] === $device->assigned_at?->toDateString())) {
+                $data['assigned_at'] = now()->toDateString();
             }
         }
 

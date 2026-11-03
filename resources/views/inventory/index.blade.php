@@ -237,8 +237,8 @@
                             </a>
                             <button data-bs-toggle="modal" data-bs-target="#edit-modal" class="btn btn-sm btn-light-warning rounded-pill px-3" title="Edit"
                                 data-action="{{ route('inventory.update', $item->id) }}"
-                                data-edit="{{ json_encode(['name' => $item->name, 'device_password' => $item->device_password, 'manufacturer' => $item->manufacturer, 'model' => $item->model, 'keyboard' => $item->keyboard, 'mouse' => $item->mouse, 'user_id' => $item->user_id, 'ip_address' => $item->ip_address, 'color' => $item->color, 'location' => $item->location, 'area' => $item->area, 'ssid' => $item->ssid, 'ssid_password' => $item->ssid_password, 'admin_username' => $item->admin_username, 'condition' => $item->condition, 'accessories' => $item->accessories, 'ram' => $item->ram, 'rom' => $item->rom, 'current_health' => $item->current_health, 'os' => $item->os, 'os_version' => $item->os_version, 'processor' => $item->processor, 'usability_tier' => $item->usability_tier, 'component_type' => $item->component_type, 'size' => $item->size, 'parent_id' => $item->parent_id, 'price' => $item->price,
-                                    'purchase_date' => $item->purchase_date?->format('Y-m-d'), 'in_use' => $item->in_use === false ? '0' : '1',
+                                data-edit="{{ json_encode(['name' => $item->name, 'device_password' => $item->device_password, 'manufacturer' => $item->manufacturer, 'model' => $item->model, 'user_id' => $item->user_id, 'ip_address' => $item->ip_address, 'color' => $item->color, 'location' => $item->location, 'area' => $item->area, 'ssid' => $item->ssid, 'ssid_password' => $item->ssid_password, 'admin_username' => $item->admin_username, 'condition' => $item->condition, 'accessories' => $item->accessories, 'ram' => $item->ram, 'rom' => $item->rom, 'current_health' => $item->current_health, 'os' => $item->os, 'os_version' => $item->os_version, 'processor' => $item->processor, 'usability_tier' => $item->usability_tier, 'component_type' => $item->component_type, 'size' => $item->size, 'parent_id' => $item->parent_id, 'price' => $item->price,
+                                    'purchase_date' => $item->purchase_date?->format('Y-m-d'), 'assigned_at' => $item->assigned_at?->format('Y-m-d'), 'in_use' => $item->in_use === false ? '0' : '1',
                                     'images' => collect(['image1', 'image2', 'image3'])->filter(fn ($f) => $item->$f)->mapWithKeys(fn ($f) => [$f => asset('storage/' . $item->$f)]),
                                 ]) }}">
                                 <i class="bi bi-pencil"></i>
@@ -304,18 +304,7 @@
                             </div>
                             
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label text-muted fw-bold small">Keyboard</label>
-                                    <input type="text" name="keyboard" class="form-control" placeholder="e.g., Logitech K120">
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label text-muted fw-bold small">Mouse</label>
-                                    <input type="text" name="mouse" class="form-control" placeholder="e.g., Logitech B100">
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
                                     <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
@@ -323,6 +312,11 @@
                                             <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Assign Date</label>
+                                    <input type="date" name="assigned_at" class="form-control">
+                                    <small class="text-muted">Defaults to today when left blank.</small>
                                 </div>
                             </div>
 
@@ -535,18 +529,7 @@
                             </div>
                             
                             <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label text-muted fw-bold small">Keyboard</label>
-                                    <input type="text" name="keyboard" class="form-control" placeholder="e.g., Logitech K120">
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label text-muted fw-bold small">Mouse</label>
-                                    <input type="text" name="mouse" class="form-control" placeholder="e.g., Logitech B100">
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <label class="form-label text-muted fw-bold small">Assigned User</label>
                                     <select name="user_id" class="form-select">
                                         <option value="">-- Unassigned (STOCK) --</option>
@@ -554,6 +537,11 @@
                                             <option value="{{ $emp->id }}">{{ $emp->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted fw-bold small">Assign Date</label>
+                                    <input type="date" name="assigned_at" class="form-control">
+                                    <small class="text-muted">Defaults to today when left blank.</small>
                                 </div>
                             </div>
 

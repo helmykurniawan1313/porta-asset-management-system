@@ -18,6 +18,7 @@ class Device extends Model
         'device_password',
         'model',
         'purchase_date',
+        'assigned_at',
         'component_type',
         'size',
         'ram',
@@ -50,6 +51,7 @@ class Device extends Model
      */
     protected $casts = [
         'purchase_date' => 'date',
+        'assigned_at' => 'date',
         'price' => 'decimal:2',
         'in_use' => 'boolean',
     ];
