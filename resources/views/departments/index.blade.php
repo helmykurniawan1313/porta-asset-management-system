@@ -9,16 +9,7 @@
 @endsection
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
-        </div>
-    @endif
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
+
 
     <section class="section">
         <div class="card shadow-sm border-0">
@@ -212,6 +203,7 @@
     <script>
         $(document).ready(function() {
             $('#table1').DataTable({
+                stateSave: true, stateDuration: -1, // same page/search after a save (this session)
                 "pageLength": 10,
                 "language": window.PORTA_DT_LANGUAGE
             });

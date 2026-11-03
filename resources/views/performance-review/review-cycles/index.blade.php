@@ -4,11 +4,6 @@
 @section('header_title', 'Review Cycles')
 
 @section('content')
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
 
     <div class="card shadow-sm border-0">
         <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">

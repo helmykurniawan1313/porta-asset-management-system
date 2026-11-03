@@ -4,11 +4,6 @@
 @section('header_title', ucfirst($assignment->review_type) . ' — review for ' . $assignment->reviewee->name)
 
 @section('content')
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
 
     @if($assignment->status === 'submitted')
         <div class="alert alert-light-success color-success mb-4">

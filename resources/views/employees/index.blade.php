@@ -9,12 +9,6 @@
 @endsection
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4" role="alert">
-            <i class="bi bi-check-circle me-2"></i>
-            {{ session('success') }}
-        </div>
-    @endif
 
     <section class="section">
         <div class="card shadow-sm border-0">
@@ -267,6 +261,7 @@
 
         $(document).ready(function() {
             $('#table1').DataTable({
+                stateSave: true, stateDuration: -1, // same page/search after a save (this session)
                 "pageLength": 15,
                 "lengthMenu": [15, 25, 50, 100],
                 "language": window.PORTA_DT_LANGUAGE

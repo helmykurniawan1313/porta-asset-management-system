@@ -177,21 +177,45 @@
 
             container.appendChild(toastEl);
 
-            var toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            // Failures stay up longer so the reason can be read.
+            var toast = new bootstrap.Toast(toastEl, { delay: type === 'danger' ? 8000 : 4000 });
             toastEl.addEventListener('hidden.bs.toast', function () {
                 toastEl.remove();
             });
             toast.show();
         };
 
+        // Every save redirects back here: confirm it worked, or say why it didn't.
         document.addEventListener('DOMContentLoaded', function () {
+            @if(session('success'))
+                window.showToast(@json(session('success')), 'success');
+            @endif
             @if(session('status'))
                 window.showToast(@json(str_contains(session('status'), ' ') ? session('status') : 'Saved successfully.'), 'success');
             @endif
             @if(session('error'))
                 window.showToast(@json(session('error')), 'danger');
             @endif
+            @if($errors->any())
+                window.showToast(@json('Not saved: ' . $errors->first() . ($errors->count() > 1 ? ' (+' . ($errors->count() - 1) . ' more)' : '')), 'danger');
+            @endif
         });
+
+        // Come back to the same spot after a save: remember the scroll position when a form is
+        // posted, and restore it when the redirect lands on the same page (after tables settle).
+        (function () {
+            var KEY = 'porta-scroll';
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if ((form.getAttribute('method') || 'get').toLowerCase() !== 'post' || form.hasAttribute('data-keep-place')) return;
+                try { sessionStorage.setItem(KEY, JSON.stringify({ path: location.pathname + location.search, y: window.scrollY })); } catch (err) {}
+            });
+            var saved = null;
+            try { saved = JSON.parse(sessionStorage.getItem(KEY) || 'null'); sessionStorage.removeItem(KEY); } catch (err) {}
+            if (saved && saved.path === location.pathname + location.search && saved.y) {
+                window.addEventListener('load', function () { setTimeout(function () { window.scrollTo(0, saved.y); }, 50); });
+            }
+        })();
     </script>
 
     <script>

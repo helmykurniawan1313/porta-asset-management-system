@@ -9,11 +9,6 @@
 @endsection
 
 @section('content')
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
 
     <a href="{{ route('hr.review-cycles.index') }}" class="btn btn-sm btn-light-secondary mb-3">
         <i class="bi bi-arrow-left"></i> Back to Cycles
@@ -268,6 +263,7 @@
     <script>
         $(document).ready(function() {
             $('#table1').DataTable({
+                stateSave: true, stateDuration: -1, // same page/search after a save (this session)
                 "pageLength": 15,
                 "lengthMenu": [15, 25, 50, 100],
                 "language": window.PORTA_DT_LANGUAGE

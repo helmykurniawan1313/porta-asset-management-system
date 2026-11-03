@@ -103,9 +103,6 @@
     @endif
 </div>
 
-@if($errors->any())
-    <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> {{ $errors->first() }}</div>
-@endif
 
 <ul class="nav nav-pills flex-wrap gap-1 mb-3" id="sb-tabs" role="tablist">
     @foreach($tabs as $key => [$label, $hint])

@@ -4,11 +4,6 @@
 @section('header_title', 'Review Templates — ' . $reviewCycle->name)
 
 @section('content')
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
 
     <a href="{{ route('hr.review-cycles.index') }}" class="btn btn-sm btn-light-secondary mb-3">
         <i class="bi bi-arrow-left"></i> Back to Cycles

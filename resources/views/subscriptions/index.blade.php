@@ -46,14 +46,7 @@
     $money = fn ($amount, $cur) => $amount === null ? '—' : trim(($cur ?? '').' '.number_format($amount, $cur === 'IDR' ? 0 : 2, $cur === 'IDR' ? ',' : '.', $cur === 'IDR' ? '.' : ','));
 @endphp
 
-@if(session('success'))
-    <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4" role="alert">
-        <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
-    </div>
-@endif
-@if($errors->any())
-    <div class="alert alert-light-danger color-danger shadow-sm mb-4">{{ $errors->first() }}</div>
-@endif
+
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
@@ -286,6 +279,7 @@
 
         $(document).ready(function () {
             const table = $('#table1').DataTable({
+                stateSave: true, stateDuration: -1, // same page/search after a save (this session)
                 pageLength: 25,
                 order: [[4, 'asc']], // soonest renewal first
                 columnDefs: [{ targets: [5], visible: false }],

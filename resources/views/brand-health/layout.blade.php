@@ -75,19 +75,11 @@
 @endsection
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-light-success color-success d-flex align-items-center gap-2 mb-4"><i class="bi bi-check-circle"></i> {{ session('success') }}</div>
-    @endif
     @if(session('ig_success'))
         <div class="alert alert-light-success color-success d-flex align-items-center gap-2 mb-4"><i class="bi bi-instagram"></i> {{ session('ig_success') }}</div>
     @endif
     @if(session('ig_error'))
         <div class="alert alert-light-danger color-danger d-flex align-items-center gap-2 mb-4"><i class="bi bi-instagram"></i> {{ session('ig_error') }}</div>
-    @endif
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger mb-4">
-            <i class="bi bi-exclamation-triangle"></i> {{ $errors->first() }}
-        </div>
     @endif
     @yield('bh-content')
 @endsection

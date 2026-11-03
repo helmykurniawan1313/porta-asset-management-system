@@ -769,6 +769,7 @@
             }
 
             $('#table1').DataTable({
+                stateSave: true, stateDuration: -1, // same page/search after a save (this session)
                 "pageLength": 10,
                 "language": window.PORTA_DT_LANGUAGE
             });

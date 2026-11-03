@@ -13,11 +13,6 @@
             <i class="bi bi-info-circle me-2"></i> Draft saved.
         </div>
     @endif
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center shadow-sm mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $errors->first() }}
-        </div>
-    @endif
 
     <div class="mb-3 text-end">
         <a href="{{ route('my-reviews.report') }}" class="btn btn-sm btn-light-primary">

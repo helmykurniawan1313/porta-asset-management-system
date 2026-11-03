@@ -398,16 +398,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-light-success color-success d-flex align-items-center gap-2 mb-4 rounded-4">
-            <i class="bi bi-check-circle icon-fix fs-5"></i> {{ session('success') }}
-        </div>
-    @endif
-    @if($errors->any())
-        <div class="alert alert-light-danger color-danger d-flex align-items-center gap-2 mb-4 rounded-4">
-            <i class="bi bi-exclamation-triangle icon-fix fs-5"></i> Action Failed: {{ $errors->first() }}
-        </div>
-    @endif
+
 
     <div class="bento mb-5">
 

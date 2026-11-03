@@ -45,9 +45,6 @@
     <i class="bi bi-arrow-left"></i> Back to licenses
 </a>
 
-@if(session('success'))
-    <div class="alert alert-light-success color-success d-flex align-items-center shadow-sm mb-4"><i class="bi bi-check-circle me-2"></i> {{ session('success') }}</div>
-@endif
 
 <div class="row">
     <div class="col-12 col-xl-4 mb-4">
