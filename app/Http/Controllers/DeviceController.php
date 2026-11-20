@@ -27,7 +27,7 @@ class DeviceController extends Controller
         }
 
         // Fetch items with assigned employees
-        $items = $query->with(['user', 'activeIssues', 'components.activeIssues'])->latest()->get();
+        $items = $query->with(['user', 'parentDevice:id,name', 'activeIssues', 'components.activeIssues'])->latest()->get();
         $employees = User::orderBy('name')->get();
 
         return view('inventory.index', compact('items', 'category', 'employees'));

@@ -114,7 +114,7 @@
                         <th>TYPE</th>
                         <th>SIZE</th>
                         <th class="text-center">HEALTH</th>
-                        <th>DATE</th>
+                        <th>INSTALLED IN</th>
                     @endif
                     <th class="text-end">ACTIONS</th>
                 </tr>
@@ -227,7 +227,16 @@
                             @endif
                             @if($item->area)<small class="text-muted d-block mt-1">{{ $item->area }}</small>@endif
                         </td>
-                        <td class="text-muted py-3">{{ $item->purchase_date?->format('d/m/Y') ?? '-' }}</td>
+                        {{-- The PC/laptop this part is installed in (sorts by device name; stock last). --}}
+                        <td class="py-3" data-order="{{ $item->parentDevice?->name ?? 'zzz' }}">
+                            @if($item->parentDevice)
+                                <a href="{{ route('inventory.show', $item->parentDevice->id) }}" class="text-decoration-none">
+                                    <i class="bi bi-pc-display me-1"></i>{{ $item->parentDevice->name }}
+                                </a>
+                            @else
+                                <span class="badge bg-light-secondary text-secondary">In stock</span>
+                            @endif
+                        </td>
                     @endif
 
                     <td class="text-end py-3">
